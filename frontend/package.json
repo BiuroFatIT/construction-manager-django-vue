@@ -2,12 +2,12 @@
   "name": "frontend",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
-    "build-only": "vite build",
+    "build-only": "vite build && node scripts/postbuild.js",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix"
   },
