@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "global_auth",
+    "app_construction_manager",
 
     # Third-party apps
     "rest_framework",  # Django REST Framework for API development
