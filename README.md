@@ -1,7 +1,5 @@
 # FatIT - Construction Manaager
 
-Nowoczesna platforma do analizy portfela inwestycyjnego: Python (Django + DRF) + Vue 3 + Vuetify.
-
 ## Stack
 
 - Backend: Django, Django REST Framework (DRF)
