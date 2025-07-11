@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+env/
+venv/
+instance/
+.webassets-cache
+
+# Django
+backend/*.log
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+backend/static/
+backend/templates/
+backend/.env
+
+# Vue/NPM (wszystko TYLKO w frontend/)
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/coverage/
+frontend/*.local
+frontend/.env*
+frontend/.vscode
+
+# Logs
+logs/
+*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/pnpm-debug.log*
+frontend/lerna-debug.log*
+
+# Cypress (E2E)
+frontend/cypress/videos/
+frontend/cypress/screenshots/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+frontend/.vscode/*
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.tsbuildinfo
