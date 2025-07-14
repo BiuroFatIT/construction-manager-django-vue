@@ -4,6 +4,8 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginForm from '../components/LoginForm.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -30,7 +32,7 @@ async function handleLogin({ username, password }: { username: string; password:
 <template>
   <v-container class="fill-height d-flex align-center justify-center">
     <v-card width="360" elevation="4">
-      <v-card-title class="justify-center">Logowanie</v-card-title>
+      <v-card-title class="justify-center">{{ t('login.title') }}</v-card-title>
       <v-card-text>
         <LoginForm @submit="handleLogin" :error=error />
       </v-card-text>

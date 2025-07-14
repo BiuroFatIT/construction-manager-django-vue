@@ -3,6 +3,8 @@
 import { reactive, ref } from 'vue'
 import { defineEmits, defineProps } from 'vue'
 import { useToggle } from '@vueuse/core'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 interface LoginFormData { username: string; password: string }
 
@@ -30,7 +32,7 @@ async function onSubmit() {
   <v-form @submit.prevent="onSubmit">
     <v-text-field
       v-model="form.username"
-      label="Nazwa użytkownika"
+      :label="t('login.username')" 
       :rules="rules.required"
       autofocus
       required
@@ -39,7 +41,7 @@ async function onSubmit() {
     <v-text-field
       v-model="form.password"
       :type="showPassword ? 'text' : 'password'"
-      label="Hasło"
+      :label="t('login.password')"
       :append-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
       @click:append="toggleShowPassword()"
       :rules="rules.required"
@@ -47,7 +49,7 @@ async function onSubmit() {
       @keyup.enter="onSubmit"
     />
     <v-btn type="submit" :loading="isLoading" color="primary" block class="mt-4">
-      Zaloguj
+        {{ t('login.button') }}
     </v-btn>
     <v-alert v-if="props.error" type="error" class="mt-3">
       {{ props.error }}
