@@ -18,6 +18,8 @@ urlpatterns = [
     # Frontend app view
     re_path(r"^(?!api/).*", FrontendAppView.as_view(), name="spa"),
 
+    # API Construction Manage
+    path('api/construction/manager/', include('app_construction_manager.urls')),
 ]
 
 if settings.DEBUG:
