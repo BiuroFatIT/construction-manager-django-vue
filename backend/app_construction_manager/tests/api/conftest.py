@@ -51,10 +51,25 @@ def user(db, test_user_credentials):
 
 
 @pytest.fixture
-def api_client(user):
+def api_client(test_user_credentials, db):
     """
-    Fixture to provide an API client for testing.
+    Fixture to provide an API client with real JWT authentication.
     """
+
+    User = get_user_model()
+
+    # Create the test user
+    user, created = User.objects.get_or_create(username=test_user_credentials["username"])
+    if created:
+        user.set_password(test_user_credentials["password"])
+        user.save()
+
     client = APIClient()
-    client.force_authenticate(user=user)
+
+    # Perform real login to get token
+    response = client.post('/api/v1/auth/token/', data=test_user_credentials)
+    assert response.status_code == 200, f"Token auth failed: {response.content}"
+
+    access_token = response.data['access']
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
     return client
