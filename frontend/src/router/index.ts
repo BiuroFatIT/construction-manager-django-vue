@@ -1,8 +1,14 @@
-import { createRouter, createWebHistory } from "vue-router";
 import type { RouteRecordRaw } from "vue-router";
+
+import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+
 import LoginView from "@/views/login/containers/LoginView.vue";
 import DashboardView from "@/views/dashboard/containers/DashboardView.vue";
-import { useAuthStore } from "@/stores/auth";
+import CompanyView from "@/views/company/containers/CompanyView.vue";
+import TeamsView from "@/views/teams/containers/TeamsView.vue";
+
+
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -16,6 +22,18 @@ const routes: Array<RouteRecordRaw> = [
     name: "Home",
     component: DashboardView,
     meta: { requiresAuth: true, title: "Strona główna" },
+  },
+  {
+    path: "/company/list",
+    name: "CompanyList",
+    component: CompanyView,
+    meta: { requiresAuth: true, title: "Company List" },
+  },
+  {
+    path: "/teams/list",
+    name: "TeamsList",
+    component: TeamsView,
+    meta: { requiresAuth: true, title: "Teams List" },
   },
 ];
 

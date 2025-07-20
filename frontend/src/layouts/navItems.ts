@@ -6,6 +6,13 @@ export const navItems = [
   
     { header: 'Moduły' },
     {
+      title: 'Firmy',
+      icon: 'mdi-account-group',
+      children: [
+        { title: 'Lista Firm', to: '/company/list', icon: 'mdi-format-list-bulleted' },
+      ],
+    },
+    {
       title: 'Ekipy',
       icon: 'mdi-account-group',
       children: [
