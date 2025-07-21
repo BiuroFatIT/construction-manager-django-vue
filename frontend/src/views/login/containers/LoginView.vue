@@ -5,6 +5,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LoginForm from '../components/LoginForm.vue'
 import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from '@/core/LanguageSwitcher.vue'
 const { t } = useI18n()
 
 const router = useRouter()
@@ -32,7 +33,10 @@ async function handleLogin({ username, password }: { username: string; password:
 <template>
   <v-container class="fill-height d-flex align-center justify-center">
     <v-card width="360" elevation="4">
-      <v-card-title class="justify-center">{{ t('login.title') }}</v-card-title>
+      <div class="d-flex justify-space-between">
+        <v-card-title>{{ t('login.title') }}</v-card-title>
+        <LanguageSwitcher />
+      </div>
       <v-card-text>
         <LoginForm @submit="handleLogin" :error=error />
       </v-card-text>

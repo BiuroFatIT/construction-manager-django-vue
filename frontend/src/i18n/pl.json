@@ -1,8 +1,36 @@
 {
-    "login": {
-      "title": "Logowanie",
-      "button": "Zaloguj",
-      "username": "Nazwa użytkownika",
-      "password": "Hasło"
-    }
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Wystąpił błąd",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "edit": "Edytuj",
+    "create": "Utwórz",
+    "search": "Szukaj",
+    "yes": "Tak",
+    "no": "Nie"
+  },
+  "language_switcher": {
+    "title": "Wybierz język",
+    "english": "Angielski",
+    "polish": "Polski",
+    "german": "Niemiecki",
+    "french": "Francuski",
+    "spanish": "Hiszpański"
+  },
+  "form": {
+    "required": "To pole jest wymagane",
+    "invalidEmail": "Nieprawidłowy adres e-mail",
+    "minLength": "Minimalna długość to {length} znaków",
+    "maxLength": "Maksymalna długość to {length} znaków"
+  },
+  "login": {
+    "title": "Logowanie",
+    "button": "Zaloguj",
+    "username": "Nazwa użytkownika",
+    "password": "Hasło",
+    "hide_password": "Ukryj hasło",
+    "show_password": "Pokaż hasło"
   }
+}

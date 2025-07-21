@@ -1,8 +1,36 @@
 {
-    "login": {
-      "title": "Logging in",
-      "button": "Login",
-      "username": "Username",
-      "password": "Password"
-    }
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "language_switcher": {
+    "title": "Select Language",
+    "english": "English",
+    "polish": "Polish",
+    "german": "German",
+    "french": "French",
+    "spanish": "Spanish"
+  },
+  "form": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "minLength": "Minimum length is {length} characters",
+    "maxLength": "Maximum length is {length} characters"
+  },
+  "login": {
+    "title": "Login",
+    "button": "Log in",
+    "username": "Username",
+    "password": "Password",
+    "hide_password": "Hide password",
+    "show_password": "Show password"
   }
+}
