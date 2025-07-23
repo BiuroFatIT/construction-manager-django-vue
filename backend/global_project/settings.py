@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "app_construction_manager",
     # Third-party apps
     "rest_framework",  # Django REST Framework for API development
+    "rest_framework_simplejwt",  # JWT authentication for DRF
     "corsheaders",  # CORS headers for API
 ]
 
@@ -66,6 +67,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'django.middleware.locale.LocaleMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -142,6 +144,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "pl-pl"
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('pl', 'Polski'),
+]
 
 TIME_ZONE = "UTC"
 
