@@ -1,7 +1,6 @@
 <!-- components/LoginForm.vue -->
 <script setup lang="ts">
 import { reactive, ref } from "vue";
-import { defineEmits, defineProps } from "vue";
 import { useToggle } from "@vueuse/core";
 import { useI18n } from "vue-i18n";
 const { t } = useI18n();
@@ -17,6 +16,7 @@ const emit = defineEmits<{
 }>();
 
 const props = defineProps<{
+  loading?: boolean;
   error: string | null;
 }>();
 
@@ -32,6 +32,9 @@ const rules = computed(() => ({
 }));
 
 async function onSubmit() {
+  const isValid = await formRef.value.validate();
+  if (!isValid.valid) return;
+  
   isLoading.value = true;
   emit("submit", { ...form });
   isLoading.value = false;
@@ -80,7 +83,7 @@ useFormRevalidateOnLocale(formRef);
     </v-text-field>
     <v-btn
       type="submit"
-      :loading="isLoading"
+      :loading="props.loading"
       color="primary"
       block
       class="mt-4"
