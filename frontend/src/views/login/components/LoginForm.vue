@@ -1,97 +1,124 @@
-<!-- components/LoginForm.vue -->
+<!-- src/components/LoginForm.vue -->
 <script setup lang="ts">
-import { reactive, ref } from "vue";
-import { useToggle } from "@vueuse/core";
-import { useI18n } from "vue-i18n";
-const { t } = useI18n();
-import { useFormRevalidateOnLocale } from "@/core/composables/useFormRevalidateOnLocale";
+/* ────────────────────────── importy ─────────────────────────── */
+import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useToggle } from '@vueuse/core'
+import { z } from 'zod';
+import {
+  Form,
+  FormField,
+  type FormInstance,
+} from '@primevue/forms'
+import { zodResolver } from '@primevue/forms/resolvers/zod';
+import InputText   from 'primevue/inputtext'
+import Password    from 'primevue/password'
+import Button      from 'primevue/button'
+import Message     from 'primevue/message'
+
+import { useFormRevalidateOnLocale } from '@/core/composables/useFormRevalidateOnLocale'
+
+/* ─────────────────── i18n & typy formularza ─────────────────── */
+const { t } = useI18n()
 
 interface LoginFormData {
-  username: string;
-  password: string;
+  username: string
+  password: string
 }
+
+/* ───────────────────── props / emits ────────────────────────── */
+defineProps<{
+  loading?: boolean
+  error: string | null
+}>()
 
 const emit = defineEmits<{
-  (e: "submit", payload: LoginFormData): void;
-}>();
+  (e: 'submit', payload: LoginFormData): void
+}>()
 
-const props = defineProps<{
-  loading?: boolean;
-  error: string | null;
-}>();
+/* ───────────────────── schema Zod ────────────────────────────── */
+const schema = z.object({
+  username: z.string().nonempty(t('form.required')),
+  password: z.string().nonempty(t('form.required'))
+})
 
-const form = reactive<LoginFormData>({ username: "", password: "" });
-const isLoading = ref(false);
-const [showPassword] = useToggle(false);
-const formRef = ref();
+/* ───────────────────── stan formularza ───────────────────────── */
+const form        = reactive<LoginFormData>({ username: '', password: '' })
+const formRef     = ref<FormInstance | null>(null)
+const [showPw, togglePw] = useToggle(false)
 
-import { computed } from 'vue'
-
-const rules = computed(() => ({
-  required: [(v: string) => !!v || t('form.required')],
-}));
-
-async function onSubmit() {
-  const isValid = await formRef.value.validate();
-  if (!isValid.valid) return;
-  
-  isLoading.value = true;
-  emit("submit", { ...form });
-  isLoading.value = false;
+/* ───────────────────── obsługa submit ───────────────────────── */
+async function onSubmit () {
+  const result = await formRef.value?.validate()
+  if (!result) return
 }
 
-useFormRevalidateOnLocale(formRef);
+/* ────────── re-walidacja po zmianie języka ───────────────────── */
+useFormRevalidateOnLocale(formRef)
 </script>
 
 <template>
-  <v-form ref="formRef" @submit.prevent="onSubmit">
-    <v-text-field
-      v-model="form.username"
-      :label="t('login.username')"
-      :rules="rules.required"
-      autofocus
-      required
-      @keyup.enter="onSubmit"
-    />
-    <v-text-field
-      v-model="form.password"
-      :type="showPassword ? 'text' : 'password'"
-      :label="t('login.password')"
-      :rules="rules.required"
-    >
-      <template #append-inner>
-        <v-tooltip
-          :text="
-            showPassword ? t('login.hide_password') : t('login.show_password')
-          "
+  <Form
+    ref="formRef"
+    :resolver="zodResolver(schema)"
+    @submit.prevent="onSubmit"
+    class="flex flex-col gap-4"
+  >
+    <!-- USERNAME -->
+    <FormField name="username" v-slot="$field">
+      <label class="block mb-1 font-semibold">{{ t('login.username') }}</label>
+      <InputText
+        v-model="$field.value"
+        :invalid="$field.invalid"
+        class="w-full"
+        autofocus
+        @keyup.enter="onSubmit"
+      />
+      <Message v-if="$field.invalid" severity="error" size="small">
+        {{ $field.error?.message }}
+      </Message>
+    </FormField>
+
+    <!-- PASSWORD  -->
+    <FormField name="password" v-slot="$field">
+      <label class="block mb-1 font-semibold">{{ t('login.password') }}</label>
+      <div class="relative">
+        <Password
+          v-model="$field.value"
+          :toggleMask="false"
+          :feedback="false"
+          :input-class="[
+            'w-full pr-10',
+            $field.invalid && 'p-invalid'
+          ]"
+          :type="showPw ? 'text' : 'password'"
+        />
+        <button
+          type="button"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary-600"
+          @click="togglePw()"
+          tabindex="-1"
         >
-          <template #activator="{ props }">
-            <v-btn
-              icon
-              v-bind="props"
-              variant="plain"
-              tabindex="-1"
-              @click="showPassword = !showPassword"
-            >
-              <v-icon>
-                {{ showPassword ? "mdi-eye-off" : "mdi-eye" }}
-              </v-icon>
-            </v-btn>
-          </template>
-        </v-tooltip>
-      </template>
-    </v-text-field>
-    <v-btn
+          <i :class="showPw ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+        </button>
+      </div>
+      <Message v-if="$field.invalid" severity="error" size="small">
+        {{ $field.error?.message }}
+      </Message>
+    </FormField>
+
+    <!-- SUBMIT -->
+    <Button
       type="submit"
-      :loading="props.loading"
-      color="primary"
-      block
-      class="mt-4"
-    >
-      {{ t("login.button") }}
-    </v-btn>
-    <v-alert v-if="props.error" type="error" class="mt-3">
-      {{ props.error }}
-    </v-alert>
-  </v-form>
+      :label="t('login.button')"
+      :loading="loading"
+      icon="pi pi-sign-in"
+      class="w-full mt-2"
+    />
+
+    <!-- GLOBAL ERROR -->
+    <Message v-if="error" severity="error" class="mt-3">
+      {{ error }}
+    </Message>
+  </Form>
 </template>

@@ -1,206 +1,178 @@
-<script setup>
-import { computed } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-import { useTheme } from 'vuetify'
+<!-- src/components/TopBar.vue -->
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+
+/* PrimeVue: lokalne importy (jeśli nie masz resolvera) */
+import Toolbar from 'primevue/toolbar'
+import Button from 'primevue/button'
+import Avatar from 'primevue/avatar'
+import Image from 'primevue/image'
+import OverlayPanel from 'primevue/overlaypanel'
+import Menu from 'primevue/menu'
+import Badge from 'primevue/badge'
 
 import fatitLogo from '@/assets/fatit_logo.png'
 
-const props = defineProps({
-  drawer: {
-    type: Boolean,
-    required: true,
-  },
-  'onUpdate:drawer': {
-    type: Function,
-    required: true,
-  },
-})
+/* ───────────────────────── props / emits ────────────────────────── */
+const props = defineProps<{
+  drawer: boolean
+  'onUpdate:drawer': (v: boolean) => void
+}>()
 
-const auth = useAuthStore()
+const emit = defineEmits<{
+  (e: 'update:drawer', value: boolean): void
+}>()
+
+/* ───────────────────────────── stores / router ───────────────────── */
+const auth   = useAuthStore()
 const router = useRouter()
-const theme = useTheme()
 
-const username = computed(() => auth.user?.username || 'User')
-const avatar = computed(() => auth.user?.avatar || 'https://randomuser.me/api/portraits/men/85.jpg')
+const username = computed(() => auth.user?.username ?? 'User')
+const avatar   = computed(() => auth.user?.avatar ??
+  'https://randomuser.me/api/portraits/men/85.jpg')
 
-const isDark = computed(() => theme.global.name.value === 'dark')
-const themeName = computed(() => theme.global.name.value)
+/* ───────────────────────────── motywy ───────────────────────────── */
+type ThemeKey = 'light' | 'dark' | 'grey-orange' | 'violet'
+const currentTheme = ref<ThemeKey>('light')
 
-const themes = [
-  { value: 'light', label: 'Jasny' },
-  { value: 'dark', label: 'Ciemny' },
-  { value: 'grey-orange', label: 'Grey Orange' },
-  { value: 'violet', label: 'Violet' },
+const themes: { value: ThemeKey; label: string; icon: string }[] = [
+  { value: 'light',      label: 'Jasny',   icon: 'pi-sun'   },
+  { value: 'dark',       label: 'Ciemny',  icon: 'pi-moon'  },
+  { value: 'grey-orange',label: 'Grey-Orange', icon: 'pi-palette' },
+  { value: 'violet',     label: 'Violet',  icon: 'pi-palette' },
 ]
 
-function setTheme(name) {
-  theme.global.name.value = name
+function setTheme(name: ThemeKey) {
+  currentTheme.value = name
   localStorage.setItem('theme', name)
+  /* tutaj możesz przełączyć plik CSS/tokenty – zależnie od implementacji */
 }
 
+/* załaduj motyw z localStorage przy starcie */
+onMounted(() => {
+  const saved = localStorage.getItem('theme') as ThemeKey | null
+  if (saved) currentTheme.value = saved
+})
+
+/* ───────────────────────────── akcje ────────────────────────────── */
 function handleLogout() {
   auth.logout()
   router.push('/login')
 }
-
-const emit = defineEmits(['update:drawer'])
 function toggleDrawer() {
   emit('update:drawer', !props.drawer)
 }
+
+/* ───────────── refy do OverlayPanel / Menu (PrimeVue API) ───────── */
+const themePanel = ref<InstanceType<typeof OverlayPanel> | null>(null)
+const userMenu   = ref<InstanceType<typeof Menu> | null>(null)
+
+function openTheme(e: Event) {
+  themePanel.value?.toggle(e)
+}
+function openUserMenu(e: Event) {
+  userMenu.value?.toggle(e)
+}
+
+/* user-menu items */
+const userMenuItems = [
+  { label: 'Dashboard',    icon: 'pi pi-home',      command: () => router.push('/user/dashboard') },
+  { label: 'Notifications',icon: 'pi pi-bell',      command: () => router.push('/notifications') },
+  { label: 'Settings',     icon: 'pi pi-cog',       command: () => router.push('/settings') },
+  { separator: true },
+  { label: 'Logout',       icon: 'pi pi-sign-out',  class: 'text-red-600', command: handleLogout },
+]
 </script>
 
 <template>
-  <v-app-bar
-    flat
-    height="64"
-    class="border-b px-md-3"
-    style="position: fixed; top: 0; left: 0; width: 100%; z-index: 1010"
-    app
-  >
-    <!-- Hamburger -->
-    <v-app-bar-nav-icon
-      @click="toggleDrawer"
-      class="me-2"
-      :aria-label="props.drawer ? 'Zamknij menu' : 'Otwórz menu'"
-    />
+  <!-- TOOLBAR -->
+  <Toolbar class="fixed top-0 left-0 w-full z-50 shadow-sm h-16 px-2">
+    <!-- LEFT -->
+    <template #start>
+      <div class="flex items-center gap-2">
+        <!-- Hamburger -->
+        <Button
+          icon="pi pi-bars"
+          rounded
+          text
+          aria-label="Menu"
+          @click="toggleDrawer"
+        />
 
-    <!-- LOGO -->
-    <a href="/" class="d-flex align-center" style="text-decoration: none">
-      <v-img :src="fatitLogo" height="32" width="32" class="me-3" contain />
-      <span class="text-h6 font-weight-bold">{{ isDark ? 'FatIT' : 'FatIT' }}</span>
-    </a>
+        <!-- Logo -->
+        <RouterLink to="/" class="flex items-center gap-2 no-underline">
+          <Image :src="fatitLogo" alt="logo" class="w-8 h-8" />
+          <span class="font-semibold text-lg text-primary-600">FatIT</span>
+        </RouterLink>
+      </div>
+    </template>
 
-    <v-spacer />
-
-    <!-- Przyciski po prawej -->
-    <v-btn variant="text" icon="mdi-bell-outline" title="Powiadomienia" />
-    <v-btn variant="text" icon="mdi-cog-outline" title="Ustawienia" />
-
-    <!-- Theme select: -->
-    <v-menu location="bottom end" transition="slide-y-transition" offset="8" min-width="360">
-      <template #activator="{ props }">
-        <v-btn icon v-bind="props" title="Wybierz motyw">
-          <v-icon>mdi-palette-swatch</v-icon>
-        </v-btn>
-      </template>
-      <v-list density="compact">
-        <v-list-item
-          v-for="t in themes"
-          :key="t.value"
-          @click="setTheme(t.value)"
-          class="d-flex align-center"
+    <!-- RIGHT -->
+    <template #end>
+      <div class="flex items-center gap-2">
+        <!-- Notifications -->
+        <Button
+          icon="pi pi-bell"
+          rounded
+          text
+          aria-label="Powiadomienia"
         >
-          <template #prepend>
-            <v-icon v-if="t.value === 'light'" color="yellow">mdi-white-balance-sunny</v-icon>
-            <v-icon v-else-if="t.value === 'dark'" color="blue-grey">mdi-weather-night</v-icon>
-            <v-icon v-else-if="t.value === 'grey-orange'" color="orange">mdi-palette</v-icon>
-            <v-icon v-else-if="t.value === 'violet'" color="purple">mdi-palette</v-icon>
-          </template>
+          <Badge severity="danger" class="absolute -top-1 -right-1 h-2 w-2" />
+        </Button>
 
-          <!-- zamiast checka – pogrubienie i kolor dla aktywnego -->
-          <v-list-item-title
-            :class="{
-              'font-weight-bold': themeName === t.value,
-              'text-primary': themeName === t.value,
-            }"
-          >
-            {{ t.label }}
-          </v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-menu>
+        <!-- Settings -->
+        <Button
+          icon="pi pi-cog"
+          rounded
+          text
+          aria-label="Ustawienia"
+          @click="router.push('/settings')"
+        />
 
-    <!-- Menu usera -->
-    <v-menu
-      location="bottom end"
-      transition="slide-y-transition"
-      :close-on-content-click="false"
-      min-width="300"
-      offset="8"
-    >
-      <template #activator="{ props }">
-        <v-btn icon v-bind="props" size="large">
-          <v-avatar size="40">
-            <v-img :src="avatar" />
-          </v-avatar>
-        </v-btn>
-      </template>
-      <v-card
-        rounded="lg"
-        :elevation="6"
-        width="320"
-        :class="[isDark ? 'v-theme--dark' : 'v-theme--light']"
+        <!-- Theme picker -->
+        <Button
+          icon="pi pi-palette"
+          rounded
+          text
+          aria-label="Motyw"
+          @click="openTheme($event)"
+        />
+
+        <!-- User menu -->
+        <Button
+          rounded
+          text
+          aria-label="User menu"
+          @click="openUserMenu($event)"
+        >
+          <Avatar :image="avatar" shape="circle" class="w-9 h-9" />
+        </Button>
+      </div>
+    </template>
+  </Toolbar>
+
+  <!-- OverlayPanel: wybór motywu -->
+  <OverlayPanel ref="themePanel" :showCloseIcon="false" class="p-0 shadow-lg">
+    <ul class="w-56">
+      <li
+        v-for="t in themes"
+        :key="t.value"
+        @click="setTheme(t.value); themePanel?.hide()"
+        class="flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-primary/10"
+        :class="currentTheme === t.value && 'font-semibold text-primary-600'"
       >
-        <!-- Banner + Avatar -->
-        <v-img
-          src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80"
-          height="88"
-          class="rounded-t-lg"
-          cover
-        >
-          <template #placeholder>
-            <div class="bg-surface-light" style="height: 88px"></div>
-          </template>
-          <div class="d-flex flex-grow-1 justify-end fill-height align-start pa-2"></div>
-        </v-img>
-        <div class="text-center mt-n9 mb-2">
-          <v-avatar size="72" class="elevation-2 border-md border-surface-light">
-            <v-img :src="avatar" />
-          </v-avatar>
-          <div class="text-h6 mt-2">{{ username }}</div>
-        </div>
-        <v-divider class="my-2"></v-divider>
-        <v-list nav density="compact">
-          <v-list-item
-            prepend-icon="mdi-view-dashboard-outline"
-            title="Dashboard"
-            to="/user/dashboard"
-            :component="router"
-          />
-          <v-list-item
-            prepend-icon="mdi-bell-outline"
-            title="Notifications"
-            to="/notifications"
-            :component="router"
-            append
-          >
-            <template #append>
-              <v-badge color="error" dot offset-x="4" offset-y="6">
-                <span slot="badge"></span>
-              </v-badge>
-            </template>
-          </v-list-item>
-          <v-list-item
-            prepend-icon="mdi-star-outline"
-            title="Sponsorships"
-            to="/sponsorships"
-            :component="router"
-          />
-          <v-list-item
-            prepend-icon="mdi-card-bulleted-outline"
-            title="Subscriptions"
-            to="/subscriptions"
-            :component="router"
-          />
-          <v-list-item
-            prepend-icon="mdi-cog-outline"
-            title="Settings"
-            to="/settings"
-            :component="router"
-          />
-          <v-list-item
-            prepend-icon="mdi-logout"
-            title="Logout"
-            class="text-error font-weight-bold"
-            @click="handleLogout"
-          />
-        </v-list>
-      </v-card>
-    </v-menu>
-  </v-app-bar>
+        <i :class="['pi', t.icon]"></i>
+        {{ t.label }}
+      </li>
+    </ul>
+  </OverlayPanel>
+
+  <!-- Menu PrimeVue: user menu -->
+  <Menu ref="userMenu" :model="userMenuItems" popup />
 </template>
 
 <style scoped>
-/* usuń wszelkie ręczne style koloru tła/tekstu tutaj */
+/* Toolbar domyślnie ma display:flex od PrimeVue – wystarczy */
 </style>
