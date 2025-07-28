@@ -1,44 +1,48 @@
-<!-- src/views/LoginView.vue -->
+<!-- src/views/containers/LoginView.vue -->
+
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { useI18n } from 'vue-i18n'
+import { ref } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
+import { useI18n } from "vue-i18n";
 
 /* PrimeVue */
-import Card from 'primevue/card'
-import Divider from 'primevue/divider'
+import Card from "primevue/card";
+import Divider from "primevue/divider";
 
-import LoginForm from '@/views/login/components/LoginForm.vue'
-import LanguageSwitcher from '@/core/LanguageSwitcher.vue'
+import LoginForm from "@/views/login/components/LoginForm.vue";
+import LanguageSwitcher from "@/core/LanguageSwitcher.vue";
 
-const { t } = useI18n()
-const router = useRouter()
-const route  = useRoute()
-const auth   = useAuthStore()
+const { t } = useI18n();
+const router = useRouter();
+const route = useRoute();
+const auth = useAuthStore();
 
-const loginLoading = ref(false)
-const error        = ref<string | null>(null)
+const loginLoading = ref(false);
+const error = ref<string | null>(null);
 
 /* gdzie przekierować po logowaniu */
-function resolveNext (): string {
-  const q = route.query.next
-  return (Array.isArray(q) ? q[0] : q)?.toString() || '/'
+function resolveNext(): string {
+  const q = route.query.next;
+  return (Array.isArray(q) ? q[0] : q)?.toString() || "/";
 }
 
-async function handleLogin ({ username, password }: {
-  username: string
-  password: string
+async function handleLogin({
+  username,
+  password,
+}: {
+  username: string;
+  password: string;
 }) {
-  error.value = null
-  loginLoading.value = true
+  error.value = null;
+  loginLoading.value = true;
   try {
-    await auth.login(username, password)
-    router.push(resolveNext())
+    await auth.login(username, password);
+    router.push(resolveNext());
   } catch (e: any) {
-    error.value = e.response?.data?.detail ?? e.message ?? 'Błąd logowania'
+    error.value = e.response?.data?.detail ?? e.message ?? "Błąd logowania";
   } finally {
-    loginLoading.value = false
+    loginLoading.value = false;
   }
 }
 </script>
@@ -48,7 +52,7 @@ async function handleLogin ({ username, password }: {
     <Card class="w-full max-w-sm shadow-lg">
       <template #title>
         <div class="flex items-center justify-between">
-          {{ t('login.title') }}
+          {{ t("form_login.title") }}
           <LanguageSwitcher />
         </div>
       </template>

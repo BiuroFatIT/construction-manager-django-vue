@@ -1,27 +1,31 @@
 // useFormRevalidateOnLocale.ts
 
-import { watch, nextTick } from 'vue'
+import { watch, nextTick } from 'vue';
 import { useI18n } from "vue-i18n";
 import { useLanguageStore } from '@/stores/language';
+import type { FormInstance } from '@primevue/forms';
+import type { Ref } from 'vue';
 
-export function useFormRevalidateOnLocale(formRef: any) {
+// Używamy bardziej precyzyjnego typu dla refa
+export function useFormRevalidateOnLocale(formRef: Ref<FormInstance | null>) {
   const languageStore = useLanguageStore();
   const { locale } = useI18n();
+
   watch(
     () => languageStore.selected,
     (newLocale) => {
-      locale.value = newLocale;
+      if (newLocale) {
+        locale.value = newLocale;
+      }
     },
     { immediate: true }
   );
 
-  watch(
-    () => locale.value,
-    async () => {
-      await nextTick();
-      formRef.value?.resetValidation();
-      await nextTick();
-      formRef.value?.validate();
+  watch(locale, async () => {
+    await nextTick();
+    
+    if (formRef.value) {
+      formRef.value.validate();
     }
-  );
+  });
 }

@@ -19,6 +19,16 @@
     "french": "French",
     "spanish": "Spanish"
   },
+  "form_login": {
+    "title": "Login",
+    "button": "Log In",
+    "username": "Username",
+    "password": "Password",
+    "hide_password": "Hide Password",
+    "show_password": "Show Password",
+    "required_username": "Username is required",
+    "required_password": "Password is required"
+  },
   "form": {
     "required": "This field is required",
     "invalidEmail": "Invalid email address",
@@ -27,10 +37,10 @@
   },
   "login": {
     "title": "Login",
-    "button": "Log in",
+    "button": "Log In",
     "username": "Username",
     "password": "Password",
-    "hide_password": "Hide password",
-    "show_password": "Show password"
+    "hide_password": "Hide Password",
+    "show_password": "Show Password"
   }
 }

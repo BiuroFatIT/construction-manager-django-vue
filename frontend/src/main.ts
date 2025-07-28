@@ -1,6 +1,7 @@
 // Plugins
 import { createI18n } from "vue-i18n";
 import { definePreset } from '@primeuix/themes';
+import ToastService from 'primevue/toastservice';
 import PrimeVue from 'primevue/config';
 import Aura from '@primeuix/themes/aura';
 import 'primeicons/primeicons.css';
@@ -41,5 +42,5 @@ app.use(PrimeVue, {
           cssLayer: false
       }
   }
-});
+}).use(ToastService);
 app.mount("#app");

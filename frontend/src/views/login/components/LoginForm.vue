@@ -1,124 +1,121 @@
-<!-- src/components/LoginForm.vue -->
+<!-- src/views/components/LoginForm.vue -->
+
 <script setup lang="ts">
-/* ────────────────────────── importy ─────────────────────────── */
-import { reactive, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { useToggle } from '@vueuse/core'
-import { z } from 'zod';
-import {
-  Form,
-  FormField,
-  type FormInstance,
-} from '@primevue/forms'
-import { zodResolver } from '@primevue/forms/resolvers/zod';
-import InputText   from 'primevue/inputtext'
-import Password    from 'primevue/password'
-import Button      from 'primevue/button'
-import Message     from 'primevue/message'
+import { reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { useToggle } from "@vueuse/core";
+import { z } from "zod";
 
-import { useFormRevalidateOnLocale } from '@/core/composables/useFormRevalidateOnLocale'
+/* PrimeVue Forms (zgodnie z dokumentacją) */
+import { Form, type FormInstance, type FormSubmitEvent } from "@primevue/forms";
+import { zodResolver } from "@primevue/forms/resolvers/zod";
 
-/* ─────────────────── i18n & typy formularza ─────────────────── */
-const { t } = useI18n()
+import { useFormRevalidateOnLocale } from "@/core/composables/useFormRevalidateOnLocale";
+
+const { t, locale } = useI18n();
 
 interface LoginFormData {
-  username: string
-  password: string
+  username: string;
+  password: string;
 }
 
-/* ───────────────────── props / emits ────────────────────────── */
-defineProps<{
-  loading?: boolean
-  error: string | null
-}>()
+const initialFormData = reactive<LoginFormData>({
+  username: "",
+  password: "",
+});
+
+/* props / emits */
+const props = defineProps<{
+  loading?: boolean;
+  error: string | null;
+}>();
 
 const emit = defineEmits<{
-  (e: 'submit', payload: LoginFormData): void
-}>()
+  (e: "submit", payload: LoginFormData): void;
+}>();
 
-/* ───────────────────── schema Zod ────────────────────────────── */
-const schema = z.object({
-  username: z.string().nonempty(t('form.required')),
-  password: z.string().nonempty(t('form.required'))
-})
+const resolver = computed(() =>
+  zodResolver(
+    z.object({
+      username: z.string().nonempty(t("form_login.required_username")),
+      password: z.string().nonempty(t("form_login.required_password")),
+    })
+  )
+);
+const onFormSubmit = (event: FormSubmitEvent<Record<string, any>>) => {
+  if (event.valid) {
+    emit("submit", event.values as LoginFormData);
+  }
+};
 
-/* ───────────────────── stan formularza ───────────────────────── */
-const form        = reactive<LoginFormData>({ username: '', password: '' })
-const formRef     = ref<FormInstance | null>(null)
-const [showPw, togglePw] = useToggle(false)
+/* state */
+const formRef = ref<FormInstance | null>(null);
+const [showPw, togglePw] = useToggle(false);
 
-/* ───────────────────── obsługa submit ───────────────────────── */
-async function onSubmit () {
-  const result = await formRef.value?.validate()
-  if (!result) return
-}
-
-/* ────────── re-walidacja po zmianie języka ───────────────────── */
-useFormRevalidateOnLocale(formRef)
+/* rewalidacja po zmianie języka */
+useFormRevalidateOnLocale(formRef);
 </script>
 
 <template>
   <Form
+    v-slot="$form"
+    :initialValues="initialFormData"
     ref="formRef"
-    :resolver="zodResolver(schema)"
-    @submit.prevent="onSubmit"
+    :resolver="resolver"
+    @submit="onFormSubmit"
     class="flex flex-col gap-4"
   >
-    <!-- USERNAME -->
-    <FormField name="username" v-slot="$field">
-      <label class="block mb-1 font-semibold">{{ t('login.username') }}</label>
+    <div class="flex flex-col gap-1">
       <InputText
-        v-model="$field.value"
-        :invalid="$field.invalid"
-        class="w-full"
+        name="username"
+        type="text"
+        :placeholder="t('form_login.username')"
         autofocus
-        @keyup.enter="onSubmit"
+        @keyup.enter="formRef?.submit()"
       />
-      <Message v-if="$field.invalid" severity="error" size="small">
-        {{ $field.error?.message }}
-      </Message>
-    </FormField>
+      <Message
+        v-if="$form.username?.invalid"
+        severity="error"
+        size="small"
+        variant="simple"
+        >{{ $form.username.error?.message }}</Message
+      >
+    </div>
 
-    <!-- PASSWORD  -->
-    <FormField name="password" v-slot="$field">
-      <label class="block mb-1 font-semibold">{{ t('login.password') }}</label>
-      <div class="relative">
-        <Password
-          v-model="$field.value"
-          :toggleMask="false"
-          :feedback="false"
-          :input-class="[
-            'w-full pr-10',
-            $field.invalid && 'p-invalid'
-          ]"
-          :type="showPw ? 'text' : 'password'"
-        />
-        <button
-          type="button"
-          class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary-600"
-          @click="togglePw()"
-          tabindex="-1"
-        >
-          <i :class="showPw ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
-        </button>
-      </div>
-      <Message v-if="$field.invalid" severity="error" size="small">
-        {{ $field.error?.message }}
+    <div class="flex flex-col gap-1 relative">
+      <Password
+        name="password"
+        :toggleMask="true"
+        :feedback="false"
+        :showToggleIcon="true"
+        :mask="showPw ? false : true"
+        :placeholder="t('form_login.password')"
+        @keyup.enter="formRef?.submit()"
+        @toggleMask="togglePw()"
+      />
+
+      <Message
+        v-if="$form.password?.invalid"
+        severity="error"
+        size="small"
+        variant="simple"
+      >
+        {{ $form.password.error?.message }}
       </Message>
-    </FormField>
+    </div>
 
     <!-- SUBMIT -->
     <Button
       type="submit"
-      :label="t('login.button')"
-      :loading="loading"
+      :label="t('form_login.button')"
+      :loading="props.loading"
       icon="pi pi-sign-in"
       class="w-full mt-2"
     />
 
     <!-- GLOBAL ERROR -->
-    <Message v-if="error" severity="error" class="mt-3">
-      {{ error }}
+    <Message v-if="props.error" severity="error" class="mt-3">
+      {{ props.error }}
     </Message>
   </Form>
 </template>
