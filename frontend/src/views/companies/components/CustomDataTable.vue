@@ -22,10 +22,20 @@
   const items = ref<any[]>([]);
   const rows = ref<number>(15);
   const page = ref<number>(1);
+  const globalFilter = ref('');
   const totalRecords = ref<number>(0);
-  const sortField = ref<string | null>(null);
-  const sortOrder = ref<number | null>(null);
+  const sortField = ref<string | number | symbol | ((item: any) => string) | undefined>(undefined);
+  const sortOrder = ref<number | undefined>(undefined);
   const loading = ref<boolean | false>(false)
+
+  function convertFilterKeys(filters: Record<string, any>): Record<string, any> {
+    const newFilters: Record<string, any> = {};
+    Object.entries(filters).forEach(([key, val]) => {
+      const newKey = key.replace(/\./g, '__');
+      newFilters[newKey] = val;
+    });
+    return newFilters;
+  }
 
   async function fetchData() {
     try {
@@ -38,7 +48,7 @@
 
       // Sorting
       if (sortField.value) {
-        params.ordering = sortOrder.value === -1 ? `-${sortField.value}` : sortField.value;
+        params.ordering = sortOrder.value === -1 ? `-${String(sortField.value)}` : sortField.value;
       }
 
       // Filtering - przygotuj obiekt prosty z polami i ich wartościami (pomijając matchMode)
@@ -46,8 +56,15 @@
         Object.entries(filters.value).map(([field, filter]) => [field, filter.value])
       );
 
+      // Przygotowane pod joiny django
+      const djangoFilters = convertFilterKeys(simpleFilters);
+
       // Dodaj sformatowane filtry do params
-      Object.assign(params, flattenFiltersWithBracketKeys(simpleFilters));
+      Object.assign(params, flattenFiltersWithBracketKeys(djangoFilters));
+
+      if (globalFilter.value) {
+        params.search = globalFilter.value;
+      }
 
       const response = await axios.get(props.url, { params });
 
@@ -98,7 +115,7 @@
     filters.value[col.field] = { value: null, matchMode }
   })
 
-  function getFilterComponent(col, filterModel, filterCallback) {
+  function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
     const filterItem = filters.value[col.field];
 
     // Synchronizacja filterModel.value <-> filters.value[col.field].value
@@ -121,7 +138,7 @@
     if (col.filterType === 'text') {
       return h(InputText, {
         modelValue: filterItem.value,
-        'onUpdate:modelValue': (val) => {
+        'onUpdate:modelValue': (val: any) => {
           filterItem.value = val;
           filterModel.value = val;
         },
@@ -137,7 +154,7 @@
       }, [
         h(InputNumber, {
           modelValue: filterModel.value?.[`min`],
-          'onUpdate:modelValue': (val) => {
+          'onUpdate:modelValue': (val: any) => {
             filterModel.value = { ...filterModel.value, [`min`]: val };
           },
           placeholder: 'Min',
@@ -149,7 +166,7 @@
         }),
         h(InputNumber, {
           modelValue: filterModel.value?.[`max`],
-          'onUpdate:modelValue': (val) => {
+          'onUpdate:modelValue': (val: any) => {
             filterModel.value = { ...filterModel.value, [`max`]: val };
           },
           placeholder: 'Max',
@@ -165,7 +182,7 @@
     if (col.filterType === 'select') {
       return h(MultiSelect, {
         modelValue: filterModel.value,
-        'onUpdate:modelValue': (val) => {
+        'onUpdate:modelValue': (val: any) => {
           filterModel.value = val;
         },
         options: col.filterSelectArray,
@@ -178,9 +195,14 @@
 
     if (col.filterType === 'date' || col.filterType === 'datetime') {
       return h(DatePicker, {
-        modelValue: filterModel.value,
-        'onUpdate:modelValue': (val) => {
-          filterModel.value = val;
+        'onUpdate:modelValue': (val: any) => {
+          if (Array.isArray(val)) {
+            // Zakres dat
+            filterModel.value = val.map(date => date ? formatDate(date) : null);
+          } else {
+            // Pojedyncza data
+            filterModel.value = val ? formatDate(val) : null;
+          }
         },
         placeholder: col.filterType === 'datetime' ? 'Wybierz datę i godzinę' : 'Wybierz datę',
         class: 'p-column-filter',
@@ -196,8 +218,14 @@
     return null;
   }
 
+  function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // miesiące od 0
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
 
-  function formatFilterValue(value) {
+  function formatFilterValue(value: any) {
     if (value instanceof Date) {
       return value.toISOString().split('T')[0];
     }
@@ -205,8 +233,8 @@
   }
 
   // Nowa funkcja, która formatuje filtry i zamienia nawiasy na _
-  function flattenFiltersWithBracketKeys(filters) {
-    const params = {};
+  function flattenFiltersWithBracketKeys(filters: any) {
+    const params: Record<string, any> = {};
 
     Object.entries(filters).forEach(([key, filter]) => {
       if (filter && typeof filter === 'object' && !Array.isArray(filter)) {
@@ -225,12 +253,22 @@
     return params;
   }
 
+  let globalFilterTimeout: ReturnType<typeof setTimeout>;
+  function onGlobalFilterChange() {
+    clearTimeout(globalFilterTimeout);
+    globalFilterTimeout = setTimeout(() => {
+      page.value = 1;
+      fetchData();
+    }, 500);
+  }
+
   function clearFilters() {
     Object.keys(filters.value).forEach(key => {
       filters.value[key].value = null;
     });
 
     page.value = 1;
+    globalFilter.value = '';
     fetchData();
   }
 </script>
@@ -252,18 +290,22 @@
     >
     <template #header>
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <!-- <div style="display: flex; justify-content: space-between; align-items: center;">
           <Button icon="pi pi-external-link" outlined label="Export" style="margin-right: 10px;"/>
           <Button icon="pi pi-plus" outlined label="Dodaj Rekord" />
-        </div>
+        </div> -->
        
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined style="margin-right:10px;" @click="clearFilters"/>
           <IconField>
             <InputIcon>
-                <i class="pi pi-search" />
+              <i class="pi pi-search" />
             </InputIcon>
-            <InputText placeholder="Global Search" />
+            <InputText
+              v-model="globalFilter"
+              placeholder="Global Search"
+              @input="onGlobalFilterChange"
+            />
           </IconField>
         </div>
       </div>

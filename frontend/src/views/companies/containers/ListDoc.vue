@@ -4,11 +4,6 @@ import CustomDataTable from '@/views/companies/components/CustomDataTable.vue';
 
 const configuration: Config[] = [
   { field: 'id', header: 'ID', sortable: true, filterable: true, filterType: 'number' },
-  { field: 'created_at', header: 'Data', sortable: true, filterable: true, filterType: 'date' },
-  { field: 'name', header: 'Nazwa', sortable: true, filterable: true, filterType: 'text' },
-  { field: 'email', header: 'Email', sortable: true, filterable: true, filterType: 'text' },
-  { field: 'phone_number_1', header: 'Telefon 1', sortable: true, filterable: true, filterType: 'text' },
-  { field: 'vat_id', header: 'NIP', sortable: true, filterable: true, filterType: 'text' },
   {
     field: 'is_active',
     header: 'Aktywna',
@@ -26,7 +21,15 @@ const configuration: Config[] = [
         </span>
       `;
     }
-  }
+  },
+  { field: 'created_at', header: 'Data', sortable: true, filterable: true, filterType: 'date' },
+  { field: 'name', header: 'Nazwa', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'email', header: 'Email', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'phone_number_1', header: 'Telefon 1', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'vat_id', header: 'NIP', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'address.state', header: 'Województwo', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'address.city', header: 'Miasto', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'address.postal_code', header: 'Kod Pocztowy', sortable: true, filterable: true, filterType: 'text' },
 ];
 </script>
 

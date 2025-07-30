@@ -2,12 +2,54 @@ import django_filters
 from rest_framework import serializers, viewsets, filters
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
-from app_construction_manager.models import Company
+from app_construction_manager.models import Company, Address
 from django.db import models
+from datetime import datetime, timedelta
 
 model = Company
 
+class CustomDateRangeFilter(django_filters.Filter):
+    def __init__(self, *args, param_name=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.param_name = param_name or self.field_name
+
+    def filter(self, qs, value):
+        values = self.parent.request.GET.getlist(self.param_name)
+
+        if len(values) == 2:
+            start, end = values
+            try:
+                start_date = datetime.strptime(start, "%Y-%m-%d").date()
+                end_date = datetime.strptime(end, "%Y-%m-%d").date() + timedelta(days=1)
+            except ValueError:
+                return qs.none()  # Błędny format daty
+
+            return qs.filter(**{
+                f"{self.field_name}__gte": start_date,
+                f"{self.field_name}__lt": end_date
+            })
+        return qs
+    
+class BooleanInFilter(django_filters.BaseInFilter, django_filters.BooleanFilter):
+    def filter(self, qs, value):
+        param_name = self.field_name + '[]'
+        values = self.parent.request.GET.getlist(param_name)
+        if not values:
+            values = self.parent.request.GET.getlist(self.field_name)
+        if values:
+            # Konwersja stringów na boolean
+            bool_values = [val.lower() == 'true' for val in values if val.lower() in ('true', 'false')]
+            return qs.filter(**{f"{self.field_name}__in": bool_values})
+        return qs
+    
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = '__all__'
+
 class Serializer(serializers.ModelSerializer):
+    address = AddressSerializer()
+    
     class Meta:
         model = model
         fields = '__all__'
@@ -15,36 +57,20 @@ class Serializer(serializers.ModelSerializer):
 class Filter(django_filters.FilterSet):
     id_min = django_filters.NumberFilter(field_name='id', lookup_expr='gte')
     id_max = django_filters.NumberFilter(field_name='id', lookup_expr='lte')
+    is_active = BooleanInFilter(field_name='is_active', lookup_expr='in')
+    created_at = CustomDateRangeFilter(field_name='created_at', param_name='created_at[]')
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    email = django_filters.CharFilter(field_name='email', lookup_expr='icontains')
+    phone_number_1 = django_filters.CharFilter(field_name='phone_number_1', lookup_expr='icontains')
+    vat_id = django_filters.CharFilter(field_name='vat_id', lookup_expr='icontains')
+    regon_id = django_filters.CharFilter(field_name='regon_id', lookup_expr='icontains')
+    address__state = django_filters.CharFilter(field_name='address__state', lookup_expr='icontains')
+    address__city = django_filters.CharFilter(field_name='address__city', lookup_expr='icontains')
+    address__postal_code = django_filters.CharFilter(field_name='address__postal_code', lookup_expr='icontains')
 
     class Meta:
         model = model
         fields = '__all__'
-        filter_overrides = {
-            models.CharField: {
-                'filter_class': django_filters.CharFilter,
-                'extra': lambda f: {
-                    'lookup_expr': 'icontains',
-                },
-            },
-            models.TextField: {
-                'filter_class': django_filters.CharFilter,
-                'extra': lambda f: {
-                    'lookup_expr': 'icontains',
-                },
-            },
-            models.EmailField: {
-                'filter_class': django_filters.CharFilter,
-                'extra': lambda f: {
-                    'lookup_expr': 'icontains',
-                },
-            },
-            models.AutoField: {
-                'filter_class': django_filters.NumericRangeFilter, 
-                'extra': lambda f: {
-                    'lookup_expr': 'range',
-                },
-            },
-        }
 
 class Pagination(PageNumberPagination):
     page_query_param = 'page'
@@ -56,10 +82,12 @@ class ViewSet(viewsets.ModelViewSet):
     queryset = model.objects.all()
     serializer_class = Serializer
     pagination_class = Pagination
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = Filter
     ordering_fields = '__all__'
     ordering = ['-created_at']
+    search_fields = ['id', 'is_active', 'name', 'email', 'phone_number_1', 'vat_id', 'regon_id', 'address__state',
+                     'address__city', 'address__postal_code']
 
 
 
