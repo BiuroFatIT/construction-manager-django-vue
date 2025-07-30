@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Config } from '@/views/companies/types/CustomDataTable';
-import CustomDataTable from '@/views/companies/components/CustomDataTable.vue';
+import { Config } from '@/types/core/CustomDataTable';
+import CustomDataTable from '@/components/core/CustomDataTable.vue';
 
 const configuration: Config[] = [
   { field: 'id', header: 'ID', sortable: true, filterable: true, filterType: 'number' },

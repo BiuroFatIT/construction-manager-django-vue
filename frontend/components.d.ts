@@ -29,6 +29,7 @@ declare module 'vue' {
     Column: typeof import('primevue/column')['default']
     ConfirmPopup: typeof import('primevue/confirmpopup')['default']
     ContextMenu: typeof import('primevue/contextmenu')['default']
+    CustomDataTable: typeof import('./src/components/core/CustomDataTable.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     DataView: typeof import('primevue/dataview')['default']
     DatePicker: typeof import('primevue/datepicker')['default']

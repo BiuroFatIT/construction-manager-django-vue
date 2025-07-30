@@ -32,3 +32,21 @@ class Company(models.Model):
 
     def __str__(self):
         return str(self.id) + " " + str(self.name) 
+    
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    price_net = models.FloatField()
+    price_gross = models.FloatField()
+    estimated_duration_weeks = models.IntegerField()
+    usable_area_m2 = models.FloatField()
+    net_area_m2 = models.FloatField()
+    gross_volume_m3 = models.FloatField()
+    is_active = models.BooleanField()
+    company = models.ForeignKey(Company, on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    create_by = models.ForeignKey(User, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return str(self.id) + " " + str(self.name) 

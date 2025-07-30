@@ -36,6 +36,8 @@ ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = "global_auth.CustomUser"  # Use the custom user model
 
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
+
 REST_FRAMEWORK = {
     # "DEFAULT_AUTHENTICATION_CLASSES": (
     #     'rest_framework.authentication.SessionAuthentication',

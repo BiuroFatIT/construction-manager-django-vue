@@ -6,7 +6,10 @@ import AppMenuItem from './AppMenuItem.vue';
 const model = ref([
     {
         label: 'Constraction Manager',
-        items: [{ label: 'Companies', icon: 'pi pi-fw pi-home', to: '/cm/companies' }]
+        items: [
+            { label: 'Firmy', icon: 'pi pi-fw pi-id-card', to: '/cm/companies' },
+            { label: 'Produkty', icon: 'pi pi-fw pi-home', to: '/cm/products' },
+        ]
     },
     {
         label: 'Home',

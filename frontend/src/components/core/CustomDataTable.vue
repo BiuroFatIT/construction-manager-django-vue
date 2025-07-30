@@ -11,7 +11,7 @@
     InputNumber, 
     MultiSelect, 
     DatePicker} from 'primevue';
-  import { Config, FilterItem } from '@/views/companies/types/CustomDataTable';
+  import { Config, FilterItem } from '@/types/core/CustomDataTable';
   import axios from 'axios';
 
   const props = defineProps<{
@@ -290,10 +290,10 @@
     >
     <template #header>
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <!-- <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
           <Button icon="pi pi-external-link" outlined label="Export" style="margin-right: 10px;"/>
           <Button icon="pi pi-plus" outlined label="Dodaj Rekord" />
-        </div> -->
+        </div>
        
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined style="margin-right:10px;" @click="clearFilters"/>

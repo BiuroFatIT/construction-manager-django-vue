@@ -20,7 +20,12 @@ const router = createRouter({
                         {
                             path: 'companies',
                             name: 'companies',
-                            component: () => import('@/views/companies/containers/ListDoc.vue')
+                            component: () => import('@/views/companies/containers/Companies.vue')
+                        },
+                        {
+                            path: 'products',
+                            name: 'products',
+                            component: () => import('@/views/products/containers/Products.vue')
                         }
                     ]
                 },
@@ -47,7 +52,7 @@ const router = createRouter({
                 {
                     path: '/uikit/list',
                     name: 'list',
-                    component: () => import('@/views/companies/containers/ListDoc.vue')
+                    component: () => import('@/views/companies/containers/Companies.vue')
                 },
                 {
                     path: '/uikit/tree',
