@@ -55,3 +55,7 @@ frontend/.vscode/*
 *.sln
 *.sw?
 *.tsbuildinfo
+
+
+#temp
+frontend_old

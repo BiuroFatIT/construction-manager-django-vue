@@ -1,0 +1,289 @@
+<script lang="ts" setup>
+  import { ref, onMounted, h, watch} from 'vue';
+  import { DataTable, 
+    Column, 
+    DataTablePageEvent, 
+    DataTableSortEvent, 
+    Button, 
+    InputText, 
+    InputIcon, 
+    IconField, 
+    InputNumber, 
+    MultiSelect, 
+    DatePicker} from 'primevue';
+  import { Config, FilterItem } from '@/views/companies/types/CustomDataTable';
+  import axios from 'axios';
+
+  const props = defineProps<{
+    config: Config[];
+    url: string;
+  }>();
+
+  const items = ref<any[]>([]);
+  const rows = ref<number>(15);
+  const page = ref<number>(1);
+  const totalRecords = ref<number>(0);
+  const sortField = ref<string | null>(null);
+  const sortOrder = ref<number | null>(null);
+  const loading = ref<boolean | false>(false)
+
+  async function fetchData() {
+    try {
+      loading.value = true;
+      const params: Record<string, any> = {
+        // Pagination
+        page: page.value,
+        page_size: rows.value
+      };
+
+      // Sorting
+      if (sortField.value) {
+        params.ordering = sortOrder.value === -1 ? `-${sortField.value}` : sortField.value;
+      }
+
+      // Filtering - przygotuj obiekt prosty z polami i ich wartościami (pomijając matchMode)
+      const simpleFilters = Object.fromEntries(
+        Object.entries(filters.value).map(([field, filter]) => [field, filter.value])
+      );
+
+      // Dodaj sformatowane filtry do params
+      Object.assign(params, flattenFiltersWithBracketKeys(simpleFilters));
+
+      const response = await axios.get(props.url, { params });
+
+      items.value = response.data.results;
+      totalRecords.value = response.data.count;
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      loading.value = false;
+      console.log('Data fetched successfully');
+    }
+  }
+
+  onMounted(() =>{
+    fetchData();
+  })
+
+  // Pagination Handler
+  function onPage(e: DataTablePageEvent) {
+    page.value = e.page + 1;
+    rows.value = e.rows;
+    fetchData();
+  }
+
+  // Sorting Handler
+  function onSort(event: DataTableSortEvent) {
+    sortField.value = event.sortField as string;
+    sortOrder.value = event.sortOrder as number;
+    page.value = 1;
+    fetchData();
+  }
+
+  // Filters Handler
+  const filters = ref<Record<string, FilterItem>>({});
+
+  function onFilterChange() {
+    page.value = 1; 
+    fetchData();
+  }
+
+  props.config.forEach((col) => {
+    if (!col.filterable) return
+
+    let matchMode = 'contains'
+    if (col.filterType === 'number') matchMode = 'equals'
+    if (col.filterType === 'select') matchMode = 'in'
+
+    filters.value[col.field] = { value: null, matchMode }
+  })
+
+  function getFilterComponent(col, filterModel, filterCallback) {
+    const filterItem = filters.value[col.field];
+
+    // Synchronizacja filterModel.value <-> filters.value[col.field].value
+    watch(
+      () => filterModel.value,
+      (newVal) => {
+        filterItem.value = newVal;
+
+        const isCleared =
+          newVal === null ||
+          (Array.isArray(newVal) && newVal.length === 0) ||
+          (typeof newVal === 'object' && newVal !== null && Object.values(newVal).every(v => v == null));
+
+        if (isCleared) {
+          filterCallback(); // 🔁 triggeruj filtr ręcznie przy „Clear”
+        }
+      }
+    );
+
+    if (col.filterType === 'text') {
+      return h(InputText, {
+        modelValue: filterItem.value,
+        'onUpdate:modelValue': (val) => {
+          filterItem.value = val;
+          filterModel.value = val;
+        },
+        placeholder: 'Szukaj',
+        class: 'p-column-filter'
+      });
+    }
+
+    if (col.filterType === 'number') {
+      return h('div', {
+        class: 'p-column-filter-range',
+        style: { display: 'flex', gap: '0.5rem', alignItems: 'center' }
+      }, [
+        h(InputNumber, {
+          modelValue: filterModel.value?.[`min`],
+          'onUpdate:modelValue': (val) => {
+            filterModel.value = { ...filterModel.value, [`min`]: val };
+          },
+          placeholder: 'Min',
+          inputStyle: { width: '85px' },
+          class: 'p-column-filter',
+          mode: 'decimal',
+          minFractionDigits: 0,
+          maxFractionDigits: 2
+        }),
+        h(InputNumber, {
+          modelValue: filterModel.value?.[`max`],
+          'onUpdate:modelValue': (val) => {
+            filterModel.value = { ...filterModel.value, [`max`]: val };
+          },
+          placeholder: 'Max',
+          inputStyle: { width: '85px' },
+          class: 'p-column-filter',
+          mode: 'decimal',
+          minFractionDigits: 0,
+          maxFractionDigits: 2
+        })
+      ]);
+    }
+
+    if (col.filterType === 'select') {
+      return h(MultiSelect, {
+        modelValue: filterModel.value,
+        'onUpdate:modelValue': (val) => {
+          filterModel.value = val;
+        },
+        options: col.filterSelectArray,
+        optionLabel: 'label',
+        optionValue: 'value',
+        placeholder: 'Filtruj...',
+        class: 'p-column-filter'
+      });
+    }
+
+    if (col.filterType === 'date' || col.filterType === 'datetime') {
+      return h(DatePicker, {
+        modelValue: filterModel.value,
+        'onUpdate:modelValue': (val) => {
+          filterModel.value = val;
+        },
+        placeholder: col.filterType === 'datetime' ? 'Wybierz datę i godzinę' : 'Wybierz datę',
+        class: 'p-column-filter',
+        showTime: col.filterType === 'datetime',
+        hourFormat: '24',
+        selectionMode: 'range',
+        rangeSeparator: ' do ',
+        dateFormat: 'yy-mm-dd',
+        showIcon: true
+      });
+    }
+
+    return null;
+  }
+
+
+  function formatFilterValue(value) {
+    if (value instanceof Date) {
+      return value.toISOString().split('T')[0];
+    }
+    return value;
+  }
+
+  // Nowa funkcja, która formatuje filtry i zamienia nawiasy na _
+  function flattenFiltersWithBracketKeys(filters) {
+    const params = {};
+
+    Object.entries(filters).forEach(([key, filter]) => {
+      if (filter && typeof filter === 'object' && !Array.isArray(filter)) {
+        // Jeśli wartość to obiekt (np. { min: 500, max: 600 })
+        Object.entries(filter).forEach(([subKey, val]) => {
+          const newKey = `${key}_${subKey}`;
+          params[newKey] = formatFilterValue(val);
+        });
+      } else {
+        // Jeśli klucz ma nawiasy, np. "id[min]"
+        const newKey = key.replace(/\[(.+?)\]/g, '_$1');
+        params[newKey] = formatFilterValue(filter);
+      }
+    });
+
+    return params;
+  }
+
+  function clearFilters() {
+    Object.keys(filters.value).forEach(key => {
+      filters.value[key].value = null;
+    });
+
+    page.value = 1;
+    fetchData();
+  }
+</script>
+
+<template>
+  <DataTable 
+    :value="items"
+    :totalRecords="totalRecords"
+    lazy
+    selectionMode="single"
+    removableSort @sort="onSort" :sortField="sortField" :sortOrder="sortOrder"
+    resizableColumns columnResizeMode="expand"
+    paginator :rowsPerPageOptions="[5, 15, 30, 50, 100]" :rows="rows" @page="onPage"
+    stripedRows showGridlines
+    filterDisplay="menu" :filters="filters"
+    :loading="loading"
+    @filter="onFilterChange"
+    scrollable scrollHeight="75vh"
+    >
+    <template #header>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <Button icon="pi pi-external-link" outlined label="Export" style="margin-right: 10px;"/>
+          <Button icon="pi pi-plus" outlined label="Dodaj Rekord" />
+        </div>
+       
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined style="margin-right:10px;" @click="clearFilters"/>
+          <IconField>
+            <InputIcon>
+                <i class="pi pi-search" />
+            </InputIcon>
+            <InputText placeholder="Global Search" />
+          </IconField>
+        </div>
+      </div>
+    </template>
+    <Column
+      v-for="(config, index) in props.config"
+      :key="index"
+      :field="config.field"
+      :header="config.header"
+      :sortable="config.sortable"
+      :filter="true"
+      :showFilterMenu="true"
+      :showFilterMatchModes="false"
+    >
+      <template v-if="config.body" #body="{ data }">
+        <span v-html="config.body(data)"></span>
+      </template>
+      <template #filter="{ filterModel, filterCallback }">
+        <component :is="getFilterComponent(config, filterModel, filterCallback)" />
+      </template>
+    </Column>
+  </DataTable>
+</template>

@@ -1,0 +1,40 @@
+<script setup lang="ts">
+import { Config } from '@/views/companies/types/CustomDataTable';
+import CustomDataTable from '@/views/companies/components/CustomDataTable.vue';
+
+const configuration: Config[] = [
+  { field: 'id', header: 'ID', sortable: true, filterable: true, filterType: 'number' },
+  { field: 'created_at', header: 'Data', sortable: true, filterable: true, filterType: 'date' },
+  { field: 'name', header: 'Nazwa', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'email', header: 'Email', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'phone_number_1', header: 'Telefon 1', sortable: true, filterable: true, filterType: 'text' },
+  { field: 'vat_id', header: 'NIP', sortable: true, filterable: true, filterType: 'text' },
+  {
+    field: 'is_active',
+    header: 'Aktywna',
+    sortable: true,
+    filterable: true,
+    filterType: 'select',
+    filterSelectArray: [
+      { label: 'Tak', value: true },
+      { label: 'Nie', value: false },
+    ],
+    body: (row: any) => {
+      return `
+        <span style="color: ${row.is_active ? 'green' : 'red'}; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+          <i class="pi ${row.is_active ? 'pi-check' : 'pi-times'}"></i>
+        </span>
+      `;
+    }
+  }
+];
+</script>
+
+<template>
+    <div class="flex flex-col">
+        <CustomDataTable
+            url="http://127.0.0.1:8000/api/construction/manager/company/"
+            :config="configuration"
+        />
+    </div>
+</template>
