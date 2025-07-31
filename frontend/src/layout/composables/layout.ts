@@ -1,12 +1,22 @@
 import { computed, reactive } from 'vue';
+import Cookies from 'js-cookie';
 
 const layoutConfig = reactive({
     preset: 'Aura',
     primary: 'emerald',
     surface: null,
-    darkTheme: false,
+    darkTheme: Cookies.get('darkTheme') === 'true' || false,
     menuMode: 'static'
 });
+
+const darkModeCookie = Cookies.get('darkTheme');
+if (darkModeCookie === 'true') {
+    layoutConfig.darkTheme = true;
+    document.documentElement.classList.add('app-dark');
+} else if (darkModeCookie === 'false') {
+    layoutConfig.darkTheme = false;
+    document.documentElement.classList.remove('app-dark');
+}
 
 const layoutState = reactive({
     staticMenuDesktopInactive: false,
@@ -37,6 +47,7 @@ export function useLayout() {
     const executeDarkModeToggle = () => {
         layoutConfig.darkTheme = !layoutConfig.darkTheme;
         document.documentElement.classList.toggle('app-dark');
+        Cookies.set('darkTheme', String(layoutConfig.darkTheme), {expires:30})
     };
 
     const toggleMenu = () => {
