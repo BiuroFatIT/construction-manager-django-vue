@@ -4,7 +4,8 @@ import { $t, updatePreset, updateSurfacePalette } from '@primeuix/themes';
 import Aura from '@primeuix/themes/aura';
 import Lara from '@primeuix/themes/lara';
 import Nora from '@primeuix/themes/nora';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import Cookies from 'js-cookie';
 
 const { layoutConfig, isDarkTheme } = useLayout();
 
@@ -170,8 +171,10 @@ function getPresetExt() {
 function updateColors(type, color) {
     if (type === 'primary') {
         layoutConfig.primary = color.name;
+        Cookies.set('primary', String(color.name), {expires:30})
     } else if (type === 'surface') {
         layoutConfig.surface = color.name;
+        Cookies.set('surface', String(color.name), {expires:30})
     }
 
     applyTheme(type, color);
@@ -187,6 +190,7 @@ function applyTheme(type, color) {
 
 function onPresetChange() {
     layoutConfig.preset = preset.value;
+    Cookies.set('preset', String(preset.value), {expires:30})
     const presetValue = presets[preset.value];
     const surfacePalette = surfaces.value.find((s) => s.name === layoutConfig.surface)?.palette;
 
@@ -195,12 +199,52 @@ function onPresetChange() {
 
 function onMenuModeChange() {
     layoutConfig.menuMode = menuMode.value;
+    Cookies.set('menuMode', String(menuMode.value), {expires:30})
 }
+
+onMounted(() => {
+    const primary = Cookies.get('primary');
+    const surface = Cookies.get('surface');
+    const presetCookie = Cookies.get('preset');
+    const menuModeCookie = Cookies.get('menuMode');
+
+    if (primary) {
+        const primaryColor = primaryColors.value.find(c => c.name === primary);
+        if (primaryColor) {
+            layoutConfig.primary = primaryColor.name;
+            applyTheme('primary', primaryColor);
+        }
+    }
+
+    if (surface) {
+        const surfaceColor = surfaces.value.find(s => s.name === surface);
+        if (surfaceColor) {
+            layoutConfig.surface = surfaceColor.name;
+            applyTheme('surface', surfaceColor);
+        }
+    }
+
+    if (presetCookie && presets[presetCookie]) {
+        layoutConfig.preset = presetCookie;
+        // jeśli masz reactive ref `preset`, też zaktualizuj:
+        preset.value = presetCookie;
+
+        // Załaduj preset i zastosuj go
+        const presetValue = presets[presetCookie];
+        const surfacePalette = surfaces.value.find((s) => s.name === layoutConfig.surface)?.palette;
+
+        $t().preset(presetValue).preset(getPresetExt()).surfacePalette(surfacePalette).use({ useDefaultOptions: true });
+    }
+
+    if (menuModeCookie) {
+        layoutConfig.menuMode = menuModeCookie;
+    }
+ });
 </script>
 
 <template>
     <div
-        class="config-panel hidden absolute top-[3.25rem] right-0 w-64 p-4 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
+        class="config-panel absolute top-[3.25rem] right-0 w-64 p-4 bg-white dark:bg-surface-900 border border-gray-300 dark:border-gray-700 rounded-md origin-top shadow-lg"
     >
         <div class="flex flex-col gap-4">
             <div>
