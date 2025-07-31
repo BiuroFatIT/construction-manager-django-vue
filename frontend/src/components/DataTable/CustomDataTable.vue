@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-  import { ref, onMounted, h, watch} from 'vue';
+  import { ref, onMounted, h, watch, markRaw, defineAsyncComponent } from 'vue';
+  import type { Component } from 'vue';
   import { DataTable, 
     Column, 
     DataTablePageEvent, 
@@ -10,11 +11,14 @@
     IconField, 
     InputNumber, 
     MultiSelect, 
+    useDialog,
+    useToast,
     DatePicker} from 'primevue';
   import { Config, FilterItem } from '@/types/core/CustomDataTable';
   import axios from 'axios';
 
   const props = defineProps<{
+    formComponent: Component;
     config: Config[];
     url: string;
   }>();
@@ -271,6 +275,33 @@
     globalFilter.value = '';
     fetchData();
   }
+
+  // Dialog Configuration Add New Rekord
+  const dialog = useDialog();
+  const toast = useToast();
+  const FooterDynamicDialog = defineAsyncComponent(() => import('@/components/DataTable/FooterDynamicDialog.vue'))
+
+  const showAddDialog = () => {
+      const dialogRef = dialog.open(props.formComponent, {
+          props: {
+              header: 'Product List',
+              modal: true
+          },
+          templates: {
+              footer: markRaw(FooterDynamicDialog)
+          },
+          onClose: (options) => {
+              if (options && options.data) {
+                  const buttonType = options.data.buttonType;
+                  const summary_and_detail = buttonType
+                      ? { summary: 'No Product Selected', detail: `Pressed '${buttonType}' button` }
+                      : { summary: 'Product Selected', detail: options.data.name };
+
+                  toast.add({ severity: 'info', ...summary_and_detail, life: 3000 });
+              }
+          }
+      });
+  }
 </script>
 
 <template>
@@ -292,7 +323,8 @@
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <Button icon="pi pi-external-link" outlined label="Export" style="margin-right: 10px;"/>
-          <Button icon="pi pi-plus" outlined label="Dodaj Rekord" />
+          <Button icon="pi pi-plus" outlined label="Dodaj Rekord" @click="showAddDialog" />
+          <DynamicDialog />
         </div>
        
         <div style="display: flex; justify-content: space-between; align-items: center;">

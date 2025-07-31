@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Config } from '@/types/core/CustomDataTable';
-import CustomDataTable from '@/components/core/CustomDataTable.vue';
+import CustomDataTable from '@/components/DataTable/CustomDataTable.vue';
+import { defineAsyncComponent } from 'vue';
+
+const CompaniesForm = defineAsyncComponent(() => import('@/views/companies/components/CompaniesForm.vue'));
 
 const configuration: Config[] = [
   {
@@ -49,6 +52,7 @@ const configuration: Config[] = [
         <CustomDataTable
             url="http://127.0.0.1:8000/api/construction/manager/products/"
             :config="configuration"
+            :formComponent="CompaniesForm"
         />
     </div>
 </template>

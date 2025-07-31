@@ -10,6 +10,7 @@
     },
     "dependencies": {
         "@eslint/config-array": "^0.21.0",
+        "@primevue/forms": "^4.3.6",
         "@primevue/themes": "^4.3.6",
         "@tailwindcss/vite": "^4.1.11",
         "axios": "^1.11.0",
