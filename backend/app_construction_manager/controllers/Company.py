@@ -54,6 +54,39 @@ class Serializer(serializers.ModelSerializer):
         model = model
         fields = '__all__'
 
+    def create(self, validated_data):
+        # 1. Extract nested address data from incoming JSON
+        address_data = validated_data.pop('address')
+
+        # 2. Create the Address instance
+        address = Address.objects.create(**address_data)
+
+        # 3. If request is available, auto-fill 'create_by' field
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            validated_data['create_by'] = request.user
+
+        # 4. Create the Company with the address assigned
+        company = Company.objects.create(address=address, **validated_data)
+        return company
+    
+    def update(self, instance, validated_data):
+        # Handle nested address update
+        address_data = validated_data.pop('address', None)
+        if address_data:
+            address_instance = instance.address
+            for attr, value in address_data.items():
+                setattr(address_instance, attr, value)
+            address_instance.save()
+
+        # Handle Company fields update
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
+
 class Filter(django_filters.FilterSet):
     id_min = django_filters.NumberFilter(field_name='id', lookup_expr='gte')
     id_max = django_filters.NumberFilter(field_name='id', lookup_expr='lte')
