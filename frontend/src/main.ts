@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import { createI18n } from "vue-i18n";
 import App from './App.vue';
 import router from './router';
 
@@ -8,12 +9,27 @@ import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 import DialogService from 'primevue/dialogservice'
 import DynamicDialog from 'primevue/dynamicdialog'
+import { createPinia } from "pinia";
 
+// Styles
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
 
+// Messages
+import messages from "./i18n/index";
+
+
 const app = createApp(App);
 
+const i18n = createI18n({
+    legacy: false,
+    locale: 'pl',
+    fallbackLocale: 'en',
+    messages
+  })
+
+app.use(i18n);
+app.use(createPinia());
 app.use(router);
 app.use(PrimeVue, {
     theme: {

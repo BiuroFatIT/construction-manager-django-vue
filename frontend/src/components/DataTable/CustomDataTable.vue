@@ -15,8 +15,8 @@
     useToast,
     DatePicker} from 'primevue';
   import { Config, FilterItem } from '@/types/core/CustomDataTable';
-  import axios from 'axios';
-
+  import api from '@/api/apiService';
+    
   const props = defineProps<{
     formComponent: Component;
     config: Config[];
@@ -31,6 +31,8 @@
   const sortField = ref<string | number | symbol | ((item: any) => string) | undefined>(undefined);
   const sortOrder = ref<number | undefined>(undefined);
   const loading = ref<boolean | false>(false)
+
+
 
   function convertFilterKeys(filters: Record<string, any>): Record<string, any> {
     const newFilters: Record<string, any> = {};
@@ -70,7 +72,7 @@
         params.search = globalFilter.value;
       }
 
-      const response = await axios.get(props.url, { params });
+      const response = await api.get(props.url, { params });
 
       items.value = response.data.results;
       totalRecords.value = response.data.count;
