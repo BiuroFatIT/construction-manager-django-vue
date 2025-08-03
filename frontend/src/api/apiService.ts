@@ -1,68 +1,96 @@
-import axios from "axios";
-import router from "@/router";
-import { useAuthStore } from "@/stores/auth";
-import { useLanguageStore } from "@/stores/language";
+// src/api/apiService.ts
+
+import axios from 'axios';
+import router from '@/router';
+import { useAuthStore } from '@/stores/auth';
+import { useLanguageStore } from '@/stores/language';
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api",
+    baseURL: 'http://localhost:8000/api'
 });
+
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value: any) => void; reject: (reason?: any) => void }> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
 
 // Interceptor do ustawiania nagłówków z językiem i tokenem
 api.interceptors.request.use((config) => {
-  const langStore = useLanguageStore();
+    const langStore = useLanguageStore();
 
-  config.headers = config.headers || {};
-  config.headers["Accept-Language"] = langStore.selected;
+    config.headers = config.headers || {};
+    config.headers['Accept-Language'] = langStore.selected;
 
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers["Authorization"] = `Bearer ${token}`;
-  }
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+    }
 
-  return config;
+    return config;
 });
 
 // Interceptor do obsługi automatycznego odświeżania JWT po 401
 api.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    const auth = useAuthStore();
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+        const auth = useAuthStore();
 
-    if (
-      error.response &&
-      error.response.status === 401 &&
-      !originalRequest._retry &&
-      localStorage.getItem("refresh_token")
-    ) {
-      originalRequest._retry = true;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            if (isRefreshing) {
+                // Jeśli odświeżanie już trwa, dodaj żądanie do kolejki
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then((token) => {
+                    originalRequest.headers['Authorization'] = 'Bearer ' + token;
+                    return api(originalRequest);
+                });
+            }
 
-      try {
-        const refreshToken = localStorage.getItem("refresh_token");
+            originalRequest._retry = true;
+            isRefreshing = true;
 
-        const { data } = await api.post("/v1/auth/token/refresh/", {
-          refresh: refreshToken,
-        });
+            try {
+                const refreshToken = auth.refreshToken;
+                if (!refreshToken) {
+                    throw new Error('No refresh token available');
+                }
 
-        localStorage.setItem("access_token", data.access);
-        api.defaults.headers.common["Authorization"] = `Bearer ${data.access}`;
-        originalRequest.headers["Authorization"] = `Bearer ${data.access}`;
+                const { data } = await axios.post('http://localhost:8000/api/v1/auth/token/refresh/', {
+                    refresh: refreshToken
+                });
 
-        // Aktualizuj token w store
-        auth.accessToken = data.access;
+                auth.accessToken = data.access;
+                if (data.refresh) {
+                    auth.refreshToken = data.refresh;
+                }
+                api.defaults.headers.common['Authorization'] = `Bearer ${data.access}`;
 
-        return api(originalRequest);
-      } catch (refreshError) {
-        auth.logout();
-        router.push({
-          name: "Login",
-          query: { next: router.currentRoute.value.fullPath },
-        });
-      }
+                processQueue(null, data.access);
+
+                originalRequest.headers['Authorization'] = `Bearer ${data.access}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError, null);
+                auth.logout();
+                router.push({ name: 'login' });
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
     }
-
-    return Promise.reject(error);
-  }
 );
 
 export default api;

@@ -2,7 +2,6 @@
 import { useAuthStore } from './stores/auth';
 import ProgressBar from "primevue/progressbar";
 const auth = useAuthStore();
-auth.initialize();
 
 </script>
 

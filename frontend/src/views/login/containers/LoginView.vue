@@ -38,7 +38,9 @@ async function handleLogin({
   loginLoading.value = true;
   try {
     await auth.login(username, password);
-    router.push(resolveNext());
+
+    router.replace(resolveNext());
+
   } catch (e: any) {
     error.value = e.response?.data?.detail ?? e.message ?? "Błąd logowania";
   } finally {

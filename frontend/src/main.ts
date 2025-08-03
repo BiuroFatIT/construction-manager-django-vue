@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import { createI18n } from "vue-i18n";
+import { createI18n } from 'vue-i18n';
 import App from './App.vue';
 import router from './router';
 
@@ -8,17 +8,17 @@ import PrimeVue from 'primevue/config';
 import StyleClass from 'primevue/styleclass';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
-import DialogService from 'primevue/dialogservice'
-import DynamicDialog from 'primevue/dynamicdialog'
-import { createPinia } from "pinia";
+import DialogService from 'primevue/dialogservice';
+import DynamicDialog from 'primevue/dynamicdialog';
+import { createPinia } from 'pinia';
 
 // Styles
 import '@/assets/styles.scss';
 import '@/assets/tailwind.css';
 
 // Messages
-import messages from "./i18n/index";
-
+import messages from './i18n/index';
+import { useAuthStore } from './stores/auth';
 
 const app = createApp(App);
 
@@ -27,7 +27,7 @@ const i18n = createI18n({
     locale: 'pl',
     fallbackLocale: 'en',
     messages
-  })
+});
 
 app.use(i18n);
 app.use(createPinia());
@@ -43,8 +43,18 @@ app.use(PrimeVue, {
 app.directive('styleclass', StyleClass);
 app.use(ToastService);
 app.use(ConfirmationService);
-app.use(DialogService)
+app.use(DialogService);
 
-app.component('DynamicDialog', DynamicDialog)
+app.component('DynamicDialog', DynamicDialog);
 
 app.mount('#app');
+
+
+window.addEventListener('storage', (e) => {
+    if (e.key === 'access_token' && !e.newValue) {
+      const auth = useAuthStore();
+      auth.logout();
+      router.replace({ name: 'login' });
+    }
+  });
+

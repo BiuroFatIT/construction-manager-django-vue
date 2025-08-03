@@ -1,3 +1,5 @@
+// src/router/index.ts
+
 /// <reference types="vite/client" />
 
 import type { RouteRecordRaw } from "vue-router";
@@ -61,9 +63,11 @@ const routes: Array<RouteRecordRaw> = [
     meta: { title: "Błąd uwierzytelniania" },
   },
   {
-    path: "/:pathMatch(.*)*",
-    redirect: { name: "notfound" },
-  },
+    path: '/:pathMatch(.*)*',
+    name: 'notfound',
+    component: () => import('@/views/general/NotFound.vue'),
+    meta: { title: '404' },
+  }
 ];
 
 const router = createRouter({
@@ -90,28 +94,16 @@ router.isReady().then(() => {
   localStorage.removeItem("vuetify:dynamic-reload");
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
-  if (!auth.isAuthReady) {
-    await auth.initialize();
-  }
+  if (!auth.isAuthReady) await auth.initialize();
 
-  // jeśli jesteśmy na loginie i już zalogowany → dashboard
-  if ((to.name === "login" || to.path === "/login") && auth.isLoggedIn) {
-    next({ name: "dashboard" });
-    return;
-  }
-
-  // ochrona tras wymagających uwierzytelnienia
   if (to.meta.requiresAuth && !auth.isLoggedIn) {
-    next({
-      path: "/auth/login",
-      query: { next: to.fullPath },
-    });
-    return;
+    return { name: 'login', query: { next: to.fullPath } };
   }
-
-  next();
+  if (to.name === 'login' && auth.isLoggedIn) {
+    return { name: 'dashboard', replace: true };
+  }
 });
 
 router.afterEach((to) => {
