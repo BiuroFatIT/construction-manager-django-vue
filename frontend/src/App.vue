@@ -1,8 +1,25 @@
+// src/App.vue
 <script setup lang="ts">
-import { useAuthStore } from './stores/auth';
-import ProgressBar from "primevue/progressbar";
+import { onMounted, onUnmounted } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+import router from '@/router';
+
 const auth = useAuthStore();
 
+const handleStorageChange = (event: StorageEvent) => {
+  if (event.key === 'access_token' && !event.newValue) {
+    auth.logout();
+    router.replace({ name: 'login' });
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('storage', handleStorageChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange);
+});
 </script>
 
 <template>

@@ -48,13 +48,3 @@ app.use(DialogService);
 app.component('DynamicDialog', DynamicDialog);
 
 app.mount('#app');
-
-
-window.addEventListener('storage', (e) => {
-    if (e.key === 'access_token' && !e.newValue) {
-      const auth = useAuthStore();
-      auth.logout();
-      router.replace({ name: 'login' });
-    }
-  });
-
