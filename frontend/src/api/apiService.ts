@@ -26,13 +26,13 @@ const processQueue = (error: any, token: string | null = null) => {
 // Interceptor do ustawiania nagłówków z językiem i tokenem
 api.interceptors.request.use((config) => {
     const langStore = useLanguageStore();
+    const auth = useAuthStore();
 
     config.headers = config.headers || {};
     config.headers['Accept-Language'] = langStore.selected;
 
-    const token = localStorage.getItem('access_token');
-    if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
+    if (auth.accessToken) {
+        config.headers['Authorization'] = `Bearer ${auth.accessToken}`;
     }
 
     return config;
@@ -83,6 +83,7 @@ api.interceptors.response.use(
                 processQueue(refreshError, null);
                 auth.logout();
                 router.push({ name: 'login' });
+                console.log('Session expired, redirecting to login', refreshError);
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;

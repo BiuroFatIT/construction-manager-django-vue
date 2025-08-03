@@ -63,7 +63,6 @@ export const useAuthStore = defineStore('auth', {
                     this.refreshToken = data.refresh;
                 }
                 api.defaults.headers.common['Authorization'] = `Bearer ${this.accessToken}`;
-                await this.fetchUser();
 
                 return true;
             } catch (e) {
