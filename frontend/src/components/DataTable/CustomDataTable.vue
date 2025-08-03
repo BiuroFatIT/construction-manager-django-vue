@@ -1,5 +1,7 @@
+<!-- eslint-disable @typescript-eslint/no-explicit-any -->
+<!-- eslint-disable @typescript-eslint/no-unused-vars -->
 <script lang="ts" setup>
-  import { ref, onMounted, h, watch, markRaw, defineAsyncComponent } from 'vue';
+  import { ref, onMounted, h, watch } from 'vue';
   import type { Component } from 'vue';
   import { DataTable, 
     Column, 
@@ -12,7 +14,6 @@
     InputNumber, 
     MultiSelect, 
     useDialog,
-    useToast,
     DatePicker} from 'primevue';
   import { Config, FilterItem } from '@/types/core/CustomDataTable';
   import api from '@/api/apiService';
@@ -80,7 +81,6 @@
       console.error('Error fetching data:', error);
     } finally {
       loading.value = false;
-      console.log('Data fetched successfully');
     }
   }
 
@@ -280,27 +280,16 @@
 
   // Dialog Configuration Add New Rekord
   const dialog = useDialog();
-  const toast = useToast();
-  const FooterDynamicDialog = defineAsyncComponent(() => import('@/components/DataTable/FooterDynamicDialog.vue'))
 
   const showAddDialog = () => {
       const dialogRef = dialog.open(props.formComponent, {
           props: {
-              header: 'Product List',
-              modal: true
+            header: 'Dodaj Rekord',
+            modal: true
           },
           templates: {
-              footer: markRaw(FooterDynamicDialog)
           },
-          onClose: (options) => {
-              if (options && options.data) {
-                  const buttonType = options.data.buttonType;
-                  const summary_and_detail = buttonType
-                      ? { summary: 'No Product Selected', detail: `Pressed '${buttonType}' button` }
-                      : { summary: 'Product Selected', detail: options.data.name };
-
-                  toast.add({ severity: 'info', ...summary_and_detail, life: 3000 });
-              }
+          onClose: () => {
           }
       });
   }
@@ -355,7 +344,7 @@
       :showFilterMatchModes="false"
     >
       <template v-if="config.body" #body="{ data }">
-        <span v-html="config.body(data)"></span>
+        <component :is="config.body(data)" />
       </template>
       <template #filter="{ filterModel, filterCallback }">
         <component :is="getFilterComponent(config, filterModel, filterCallback)" />

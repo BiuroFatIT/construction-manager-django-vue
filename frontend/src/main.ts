@@ -5,6 +5,7 @@ import router from './router';
 
 import Aura from '@primevue/themes/aura';
 import PrimeVue from 'primevue/config';
+import StyleClass from 'primevue/styleclass';
 import ConfirmationService from 'primevue/confirmationservice';
 import ToastService from 'primevue/toastservice';
 import DialogService from 'primevue/dialogservice'
@@ -39,6 +40,7 @@ app.use(PrimeVue, {
         }
     }
 });
+app.directive('styleclass', StyleClass);
 app.use(ToastService);
 app.use(ConfirmationService);
 app.use(DialogService)

@@ -5,12 +5,13 @@ import AppMenuItem from './AppMenuItem.vue';
 
 const model = ref([
     {
-        label: 'Constraction Manager',
+        label: 'Zarządzanie Budową',
         items: [
-            { label: 'Firmy', icon: 'pi pi-fw pi-id-card', to: '/cm/companies' },
             { label: 'Produkty', icon: 'pi pi-fw pi-home', to: '/cm/products' },
+            { label: 'Dane Firmy', icon: 'pi pi-fw pi-id-card', to: '/cm/company/details' },
+            { label: 'Użytkownicy', icon: 'pi pi-fw pi-home', to: '/cm/users' },
         ]
-    },
+    }
 ]);
 </script>
 

@@ -10,6 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     Button: typeof import('primevue/button')['default']
     CustomDataTable: typeof import('./components/DataTable/CustomDataTable.vue')['default']
+    Fieldset: typeof import('primevue/fieldset')['default']
     FloatingConfigurator: typeof import('./components/FloatingConfigurator.vue')['default']
     FooterDynamicDialog: typeof import('./components/DataTable/FooterDynamicDialog.vue')['default']
     Image: typeof import('primevue/image')['default']

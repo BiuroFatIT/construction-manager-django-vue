@@ -16,23 +16,6 @@ const routes: Array<RouteRecordRaw> = [
         meta: { requiresAuth: true, title: "Strona główna" },
       },
       {
-        path: "company",
-        component: () => import("@/views/companies/containers/CompaniesView.vue"),
-        meta: { requiresAuth: true, title: "Firmy" },
-        children: [
-          {
-            path: "list",
-            name: "CompanyList",
-            component: () => import("@/views/companies/containers/CompaniesView.vue"),
-            meta: { requiresAuth: true, title: "Company List" },
-          },
-          {
-            path: "",
-            redirect: { name: "CompanyList" },
-          },
-        ],
-      },
-      {
         path: "cm",
         name: "constructionManager",
         meta: { requiresAuth: true, title: "Construction Manager" },
@@ -50,8 +33,10 @@ const routes: Array<RouteRecordRaw> = [
             meta: { requiresAuth: true, title: "Products" },
           },
           {
-            path: "",
-            redirect: { name: "cm-companies" },
+            path: "users",
+            name: "cm-users",
+            component: () => import("@/views/users/containers/UsersView.vue"),
+            meta: { requiresAuth: true, title: "Users" },
           },
         ],
       },

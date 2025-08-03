@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { Config } from '@/types/core/CustomDataTable';
 import CustomDataTable from '@/components/DataTable/CustomDataTable.vue';
 import { defineAsyncComponent } from 'vue';
@@ -17,30 +17,24 @@ const configuration: Config[] = [
       { label: 'Nie', value: false },
     ],
     body: (row: any) => {
-      return `
-        <span style="color: ${row.is_active ? 'green' : 'red'}; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-          <i class="pi ${row.is_active ? 'pi-check' : 'pi-times'}"></i>
+      return () => (
+        <span
+          style={{
+            color: row.is_active ? 'green' : 'red',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <i class={`pi ${row.is_active ? 'pi-check' : 'pi-times'}`}></i>
         </span>
-      `;
+      );
     }
   },
   { field: 'name', header: 'Nazwa', sortable: true, filterable: true, filterType: 'text' },
   { field: 'price_net', header: 'Cenna Netto', sortable: true, filterable: true, filterType: 'number' },
   { field: 'price_gross', header: 'Cenna Brutto', sortable: true, filterable: true, filterType: 'text' },
-  { 
-    field: 'estimated_duration_weeks', 
-    header: 'Czas Budowy', 
-    sortable: true, 
-    filterable: true, 
-    filterType: 'number',
-    body: (row: any) => {
-      return `
-        <span style="color: ${row.estimated_duration_weeks > 50 ? 'red' : 'green'}; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-          ${row.estimated_duration_weeks}
-        </span>
-      `;
-    } 
-  },
   { field: 'usable_area_m2', header: 'Powierzchnia Użytkowa', sortable: true, filterable: true, filterType: 'number' },
   { field: 'net_area_m2', header: 'Powierzchnia Netto', sortable: true, filterable: true, filterType: 'number' },
   { field: 'gross_volume_m3', header: 'Kubatura', sortable: true, filterable: true, filterType: 'number' },

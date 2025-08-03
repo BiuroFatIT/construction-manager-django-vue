@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="tsx">
 import { Config } from '@/types/core/CustomDataTable';
 import CustomDataTable from '@/components/DataTable/CustomDataTable.vue';
 import { defineAsyncComponent } from 'vue';
@@ -9,7 +9,7 @@ const configuration: Config[] = [
   { field: 'id', header: 'ID', sortable: true, filterable: true, filterType: 'number' },
   {
     field: 'is_active',
-    header: 'Aktywna',
+    header: 'Aktywny',
     sortable: true,
     filterable: true,
     filterType: 'select',
@@ -18,11 +18,19 @@ const configuration: Config[] = [
       { label: 'Nie', value: false },
     ],
     body: (row: any) => {
-      return `
-        <span style="color: ${row.is_active ? 'green' : 'red'}; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-          <i class="pi ${row.is_active ? 'pi-check' : 'pi-times'}"></i>
+      return () => (
+        <span
+          style={{
+            color: row.is_active ? 'green' : 'red',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <i class={`pi ${row.is_active ? 'pi-check' : 'pi-times'}`}></i>
         </span>
-      `;
+      );
     }
   },
   { field: 'created_at', header: 'Data', sortable: true, filterable: true, filterType: 'date' },
