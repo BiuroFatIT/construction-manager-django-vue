@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
-User = get_user_model()
 
 class Address(models.Model):
     street = models.CharField(max_length=255)
@@ -28,7 +28,7 @@ class Company(models.Model):
     timezone = models.CharField(max_length=32)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    create_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    create_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
 
     def __str__(self):
         return str(self.id) + " " + str(self.name) 
@@ -46,7 +46,7 @@ class Product(models.Model):
     company = models.ForeignKey(Company, on_delete=models.PROTECT)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    create_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    create_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
 
     def __str__(self):
         return str(self.id) + " " + str(self.name) 
