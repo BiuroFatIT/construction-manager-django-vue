@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { useLayout } from '@/layout/composables/layout';
 import AppConfigurator from './AppConfigurator.vue';
-import fatitLogo from '@/assets/fatit_logo.png'
+import fatitLogo from '@/assets/fatit_logo.png';
 import { ref } from 'vue';
-
 
 const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
 
 const isConfigOpen = ref(false);
 
 function toggleConfig() {
-  isConfigOpen.value = !isConfigOpen.value;
+    isConfigOpen.value = !isConfigOpen.value;
 }
 </script>
 
@@ -34,17 +33,13 @@ function toggleConfig() {
                 </button>
                 <div class="relative">
                     <button
-                    type="button"
-                    class="layout-topbar-action layout-topbar-action-highlight"
-                    @click="toggleConfig"
-                    :aria-expanded="isConfigOpen.toString()"
-                    aria-label="Toggle config panel"
+                        v-styleclass="{ selector: '@next', enterFromClass: 'hidden', enterActiveClass: 'animate-scalein', leaveToClass: 'hidden', leaveActiveClass: 'animate-fadeout', hideOnOutsideClick: true }"
+                        type="button"
+                        class="layout-topbar-action layout-topbar-action-highlight"
                     >
-                    <i class="pi pi-palette"></i>
+                        <i class="pi pi-palette"></i>
                     </button>
-
-                    <!-- Przekaż isConfigOpen jako prop do AppConfigurator -->
-                    <AppConfigurator v-show="isConfigOpen" />
+                    <AppConfigurator />
                 </div>
             </div>
 

@@ -171,10 +171,10 @@ function getPresetExt() {
 function updateColors(type, color) {
     if (type === 'primary') {
         layoutConfig.primary = color.name;
-        Cookies.set('primary', String(color.name), {expires:30})
+        Cookies.set('primary', String(color.name), { expires: 30 });
     } else if (type === 'surface') {
         layoutConfig.surface = color.name;
-        Cookies.set('surface', String(color.name), {expires:30})
+        Cookies.set('surface', String(color.name), { expires: 30 });
     }
 
     applyTheme(type, color);
@@ -190,7 +190,7 @@ function applyTheme(type, color) {
 
 function onPresetChange() {
     layoutConfig.preset = preset.value;
-    Cookies.set('preset', String(preset.value), {expires:30})
+    Cookies.set('preset', String(preset.value), { expires: 30 });
     const presetValue = presets[preset.value];
     const surfacePalette = surfaces.value.find((s) => s.name === layoutConfig.surface)?.palette;
 
@@ -199,7 +199,7 @@ function onPresetChange() {
 
 function onMenuModeChange() {
     layoutConfig.menuMode = menuMode.value;
-    Cookies.set('menuMode', String(menuMode.value), {expires:30})
+    Cookies.set('menuMode', String(menuMode.value), { expires: 30 });
 }
 
 onMounted(() => {
@@ -209,7 +209,7 @@ onMounted(() => {
     const menuModeCookie = Cookies.get('menuMode');
 
     if (primary) {
-        const primaryColor = primaryColors.value.find(c => c.name === primary);
+        const primaryColor = primaryColors.value.find((c) => c.name === primary);
         if (primaryColor) {
             layoutConfig.primary = primaryColor.name;
             applyTheme('primary', primaryColor);
@@ -217,7 +217,7 @@ onMounted(() => {
     }
 
     if (surface) {
-        const surfaceColor = surfaces.value.find(s => s.name === surface);
+        const surfaceColor = surfaces.value.find((s) => s.name === surface);
         if (surfaceColor) {
             layoutConfig.surface = surfaceColor.name;
             applyTheme('surface', surfaceColor);
@@ -239,12 +239,12 @@ onMounted(() => {
     if (menuModeCookie) {
         layoutConfig.menuMode = menuModeCookie;
     }
- });
+});
 </script>
 
 <template>
     <div
-        class="config-panel absolute top-[3.25rem] right-0 w-64 p-4 bg-white dark:bg-surface-900 border border-gray-300 dark:border-gray-700 rounded-md origin-top shadow-lg"
+        class="config-panel hidden absolute top-[3.25rem] right-0 w-64 p-4 bg-surface-0 dark:bg-surface-900 border border-surface rounded-border origin-top shadow-[0px_3px_5px_rgba(0,0,0,0.02),0px_0px_2px_rgba(0,0,0,0.05),0px_1px_4px_rgba(0,0,0,0.08)]"
     >
         <div class="flex flex-col gap-4">
             <div>

@@ -16,7 +16,7 @@ interface User {
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null as User | null, 
+        user: null as User | null,
         accessToken: useLocalStorage<string | null>('access_token', null),
         refreshToken: useLocalStorage<string | null>('refresh_token', null),
         isAuthReady: false
@@ -25,8 +25,8 @@ export const useAuthStore = defineStore('auth', {
         isLoggedIn: (state) => !!state.user && !!state.accessToken
     },
     actions: {
-        async login(username: string, password: string) {
-            const res = await api.post('v1/auth/token/', { username, password });
+        async login(email: string, password: string) {
+            const res = await api.post('v1/auth/token/', { email, password });
 
             this.accessToken = res.data.access;
             this.refreshToken = res.data.refresh;
@@ -76,10 +76,8 @@ export const useAuthStore = defineStore('auth', {
                 api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 try {
                     await this.fetchUser();
-                } catch {
-                }
-            }
-            else if (this.refreshToken) {
+                } catch {}
+            } else if (this.refreshToken) {
                 try {
                     const refreshed = await this.tryRefreshToken();
                     if (refreshed) await this.fetchUser();

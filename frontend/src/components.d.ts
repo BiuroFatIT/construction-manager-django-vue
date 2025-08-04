@@ -21,5 +21,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SelectButton: typeof import('primevue/selectbutton')['default']
     Textarea: typeof import('primevue/textarea')['default']
+    TieredMenu: typeof import('primevue/tieredmenu')['default']
   }
 }
