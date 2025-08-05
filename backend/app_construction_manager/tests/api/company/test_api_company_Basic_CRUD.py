@@ -3,7 +3,7 @@ from app_construction_manager.models import Company, Address
 
 
 # Test order for the company CRUD tests
-TEST_ORDER = 2
+TEST_ORDER = 20
 
 
 

@@ -2,7 +2,7 @@ import pytest
 from rest_framework import status
 
 # Test order for company CRUD operations
-TEST_ORDER = 2
+TEST_ORDER = 20
 
 @pytest.mark.order(TEST_ORDER)
 @pytest.mark.django_db

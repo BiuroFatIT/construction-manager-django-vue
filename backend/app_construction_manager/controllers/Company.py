@@ -49,6 +49,7 @@ class AddressSerializer(serializers.ModelSerializer):
 
 class Serializer(serializers.ModelSerializer):
     address = AddressSerializer()
+    create_by = serializers.PrimaryKeyRelatedField(read_only=True)
     
     class Meta:
         model = model

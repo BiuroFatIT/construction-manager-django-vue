@@ -1,6 +1,6 @@
 import pytest
 
-TEST_ORDER = 1
+TEST_ORDER = 10
 
 @pytest.mark.order(TEST_ORDER)
 def test_client_can_access_company_endpoint(api_client, db):
@@ -10,4 +10,9 @@ def test_client_can_access_company_endpoint(api_client, db):
 @pytest.mark.order(TEST_ORDER)
 def test_client_can_access_products_endpoint(api_client, db):
     response = api_client.get('/api/construction/manager/products/')
+    assert response.status_code == 200
+
+@pytest.mark.order(TEST_ORDER)
+def test_client_can_access_user_endpoint(api_client, db):
+    response = api_client.get('/api/construction/manager/user/')
     assert response.status_code == 200

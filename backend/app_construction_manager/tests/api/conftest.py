@@ -25,16 +25,33 @@ env = environ.Env(
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
+@pytest.fixture
+def unauthenticated_client():
+    """
+    Fixture that provides an unauthenticated API client for testing authentication failures.
+    """
+    from rest_framework.test import APIClient
+    return APIClient()
+
+@pytest.fixture
+def invalid_credentials():
+    """
+    Fixture that provides invalid credentials for testing authentication failures.
+    """
+    return {
+        "email": "nonexistent@example.com",
+        "password": "wrongpassword"
+    }
+
 @pytest.fixture(scope="session")
 def test_user_credentials():
     """
     Fixture to provide test user credentials.
     """
     return {
-        "username": env("TEST_USER"),
+        "email": env("TEST_USER_EMAIL"),
         "password": env("TEST_USER_PASSWORD")
     }
-
 
 @pytest.fixture(scope="session")
 def user(django_db_setup, django_db_blocker, test_user_credentials):
@@ -44,7 +61,7 @@ def user(django_db_setup, django_db_blocker, test_user_credentials):
     User = get_user_model()
     with django_db_blocker.unblock():
         user, created = User.objects.get_or_create(
-            username=test_user_credentials["username"]
+            email=test_user_credentials["email"]
         )
         if created:
             # Properly set the password with hashing
