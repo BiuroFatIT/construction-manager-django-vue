@@ -1,13 +1,16 @@
 <script setup lang="tsx">
 import { Config } from '@/types/core/CustomDataTable';
-import CustomDataTable from '@/components/DataTable/CustomDataTable.vue';
 import { defineAsyncComponent } from 'vue';
-import Tag from 'primevue/tag';
-import Menu from '@/views/users/components/Menu.vue';
 import { useDateFormatter } from '@/composable/useDateFormatter';
+import CustomDataTable from '@/components/DataTable/CustomDataTable.vue';
+import Tag from 'primevue/tag';
+import UserMenu from '@/views/users/components/UserMenu.vue';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const { formatDate } = useDateFormatter();
-const Form = defineAsyncComponent(() => import('@/views/users/components/UsersForm.vue'));
+const createFormComponent = defineAsyncComponent(() => import('@/views/users/components/CreateUsersForm.vue'));
+const tableRef = ref();
 
 const configuration: Config[] = [
     {
@@ -16,11 +19,11 @@ const configuration: Config[] = [
         sortable: false,
         filterable: false,
         filterType: 'text',
-        body: (row: any) => <Menu />
+        body: (row: any) => <UserMenu row={row.id} onUpdated={() => tableRef.value?.fetchData?.()} />
     },
     {
         field: 'is_active',
-        header: 'Aktywny',
+        header: t('user.is_active'),
         sortable: true,
         filterable: true,
         filterType: 'select',
@@ -42,12 +45,12 @@ const configuration: Config[] = [
             </span>
         )
     },
-    { field: 'first_name', header: 'Imię', sortable: true, filterable: true, filterType: 'text' },
-    { field: 'last_name', header: 'Nazwisko', sortable: true, filterable: true, filterType: 'text' },
-    { field: 'email', header: 'Email', sortable: true, filterable: true, filterType: 'text' },
+    { field: 'first_name', header: t('user.first_name'), sortable: true, filterable: true, filterType: 'text' },
+    { field: 'last_name', header: t('user.last_name'), sortable: true, filterable: true, filterType: 'text' },
+    { field: 'email', header: t('user.email'), sortable: true, filterable: true, filterType: 'text' },
     {
         field: 'groups',
-        header: 'Uprawnienia',
+        header: t('user.groups'),
         sortable: true,
         filterable: true,
         filterType: 'select',
@@ -76,18 +79,18 @@ const configuration: Config[] = [
     },
     {
         field: 'last_login',
-        header: 'Ostatnie Logowanie',
+        header: t('user.last_login'),
         sortable: true,
         filterable: true,
         filterType: 'datetime',
         body: (row: any) => <span>{formatDate(row.last_login)}</span>
     },
-    { field: 'date_joined', header: 'Data Utworzenia', sortable: true, filterable: true, filterType: 'datetime', body: (row: any) => <span>{formatDate(row.date_joined)}</span> }
+    { field: 'date_joined', header: t('user.date_joined'), sortable: true, filterable: true, filterType: 'datetime', body: (row: any) => <span>{formatDate(row.date_joined)}</span> }
 ];
 </script>
 
 <template>
     <div class="flex flex-col">
-        <CustomDataTable url="/construction/manager/user/" :config="configuration" :formComponent="Form" />
+        <CustomDataTable ref="tableRef" url="/construction/manager/user/" :config="configuration" :createFormComponent="createFormComponent" />
     </div>
 </template>

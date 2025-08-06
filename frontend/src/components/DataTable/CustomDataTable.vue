@@ -3,12 +3,26 @@
 <script lang="ts" setup>
 import { ref, onMounted, h, watch } from 'vue';
 import type { Component } from 'vue';
-import { DataTable, Column, DataTablePageEvent, DataTableSortEvent, Button, InputText, InputIcon, IconField, InputNumber, MultiSelect, useDialog, DatePicker } from 'primevue';
+import { DataTable, Column, DataTablePageEvent, DataTableSortEvent, Button, InputText, InputIcon, IconField, InputNumber, MultiSelect, useDialog, DatePicker, Toast } from 'primevue';
 import { Config, FilterItem } from '@/types/core/CustomDataTable';
 import api from '@/api/apiService';
+import { useToast } from 'primevue/usetoast';
+import { useI18n } from 'vue-i18n';
+import { usePrimeVue } from 'primevue/config';
+
+const PrimeVue = usePrimeVue();
+const { t } = useI18n();
+
+PrimeVue.config.locale = {
+    ...PrimeVue.config.locale,
+    apply: t('datatable.button_clear_filters'),
+    clear: t('datatable.button_apply_filters')
+} as any;
+
+const toast = useToast();
 
 const props = defineProps<{
-    formComponent: Component;
+    createFormComponent: Component;
     config: Config[];
     url: string;
 }>();
@@ -22,6 +36,7 @@ const sortField = ref<string | number | symbol | ((item: any) => string) | undef
 const sortOrder = ref<number | undefined>(undefined);
 const loading = ref<boolean | false>(false);
 
+// Zamienia address.city na address__city pod django
 function convertFilterKeys(filters: Record<string, any>): Record<string, any> {
     const newFilters: Record<string, any> = {};
     Object.entries(filters).forEach(([key, val]) => {
@@ -31,27 +46,23 @@ function convertFilterKeys(filters: Record<string, any>): Record<string, any> {
     return newFilters;
 }
 
+// Fetch Data Function
 async function fetchData() {
     try {
         loading.value = true;
         const params: Record<string, any> = {
-            // Pagination
             page: page.value,
             page_size: rows.value
         };
 
-        // Sorting
         if (sortField.value) {
             params.ordering = sortOrder.value === -1 ? `-${String(sortField.value)}` : sortField.value;
         }
 
-        // Filtering - przygotuj obiekt prosty z polami i ich wartościami (pomijając matchMode)
         const simpleFilters = Object.fromEntries(Object.entries(filters.value).map(([field, filter]) => [field, filter.value]));
 
-        // Przygotowane pod joiny django
         const djangoFilters = convertFilterKeys(simpleFilters);
 
-        // Dodaj sformatowane filtry do params
         Object.assign(params, flattenFiltersWithBracketKeys(djangoFilters));
 
         if (globalFilter.value) {
@@ -66,6 +77,33 @@ async function fetchData() {
         console.error('Error fetching data:', error);
     } finally {
         loading.value = false;
+    }
+}
+
+// Fetch All Data Function for Export
+async function fetchAllData(): Promise<any[]> {
+    try {
+        const params: Record<string, any> = {};
+
+        if (sortField.value) {
+            params.ordering = sortOrder.value === -1 ? `-${String(sortField.value)}` : sortField.value;
+        }
+
+        const simpleFilters = Object.fromEntries(Object.entries(filters.value).map(([field, filter]) => [field, filter.value]));
+
+        const djangoFilters = convertFilterKeys(simpleFilters);
+        Object.assign(params, flattenFiltersWithBracketKeys(djangoFilters));
+
+        if (globalFilter.value) {
+            params.search = globalFilter.value;
+        }
+
+        const response = await api.get(props.url, { params });
+
+        return response.data || [];
+    } catch (error) {
+        console.error('Błąd podczas pobierania danych do eksportu:', error);
+        return [];
     }
 }
 
@@ -130,7 +168,7 @@ function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
                 filterItem.value = val;
                 filterModel.value = val;
             },
-            placeholder: 'Szukaj',
+            placeholder: t('datatable.input_search'),
             class: 'p-column-filter'
         });
     }
@@ -180,7 +218,7 @@ function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
             options: col.filterSelectArray,
             optionLabel: 'label',
             optionValue: 'value',
-            placeholder: 'Filtruj...',
+            placeholder: t('datatable.input_multi_select'),
             class: 'p-column-filter'
         });
     }
@@ -196,7 +234,7 @@ function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
                     filterModel.value = val ? formatDate(val) : null;
                 }
             },
-            placeholder: col.filterType === 'datetime' ? 'Wybierz datę i godzinę' : 'Wybierz datę',
+            placeholder: col.filterType === 'datetime' ? t('datatable.input_date_time') : t('datatable.input_date'),
             class: 'p-column-filter',
             showTime: col.filterType === 'datetime',
             hourFormat: '24',
@@ -212,7 +250,7 @@ function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
 
 function formatDate(date: Date): string {
     const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0'); // miesiące od 0
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
@@ -224,7 +262,6 @@ function formatFilterValue(value: any) {
     return value;
 }
 
-// Nowa funkcja, która formatuje filtry i zamienia nawiasy na _
 function flattenFiltersWithBracketKeys(filters: any) {
     const params: Record<string, any> = {};
 
@@ -264,18 +301,58 @@ function clearFilters() {
     fetchData();
 }
 
-// Dialog Configuration Add New Rekord
+// Obsługa Dialoga
 const dialog = useDialog();
 
 const showAddDialog = () => {
-    const dialogRef = dialog.open(props.formComponent, {
+    dialog.open(props.createFormComponent, {
         props: {
-            header: 'Dodaj Rekord',
-            modal: true
+            header: t('datatable.button_add'),
+            modal: true,
+            style: {
+                width: 'auto',
+                minWidth: 'fit-content',
+                maxWidth: '90vw'
+            },
+            contentStyle: {
+                overflow: 'visible'
+            }
         },
-        templates: {},
-        onClose: () => {}
+        emits: {
+            onSave: (e) => {
+                toast.add({ severity: 'success', summary: 'Sukces', detail: t('datatable.message_success_add'), life: 2000 });
+                fetchData();
+            }
+        }
     });
+};
+
+// Obsługa dynamicznych kolumn
+const values = ref([...props.config]);
+const selectedColumns = ref([...props.config]);
+const columns = ref([...props.config]);
+
+const onToggle = (val: Config[]) => {
+    selectedColumns.value = columns.value.filter((col) => val.some((v) => v.field === col.field));
+};
+
+// Obsługa fetcha po delete lub update
+defineExpose({
+    fetchData
+});
+
+// Eksport do Excela
+import { exportToExcelNative } from '@/composable/files/excel';
+
+const exportLoading = ref(false);
+
+const handleExport = async () => {
+    exportLoading.value = true;
+    try {
+        await exportToExcelNative(fetchAllData, selectedColumns.value, 'dane-export.xlsx');
+    } finally {
+        exportLoading.value = false;
+    }
 };
 </script>
 
@@ -304,26 +381,33 @@ const showAddDialog = () => {
         scrollable
         scrollHeight="75vh"
     >
+        <!-- Generowanie Header Z Opcjami -->
         <template #header>
-            <div style="display: flex; justify-content: space-between; align-items: center">
-                <div style="display: flex; justify-content: space-between; align-items: center">
-                    <Button icon="pi pi-external-link" outlined label="Export" style="margin-right: 10px" />
-                    <Button icon="pi pi-plus" outlined label="Dodaj Rekord" @click="showAddDialog" />
-                    <DynamicDialog />
+            <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-3 w-full lg:w-auto">
+                    <div class="w-full lg:w-80">
+                        <MultiSelect v-model="selectedColumns" :options="values" optionLabel="header" filter placeholder="Wybierz Kolumny" :maxSelectedLabels="3" :selectedItemsLabel="t('datatable.input_column_range')" class="w-full" />
+                    </div>
+                    <div class="flex flex-row gap-2">
+                        <Button icon="pi pi-external-link" outlined :label="t('datatable.button_export')" @click="handleExport" :loading="exportLoading" />
+                        <Button icon="pi pi-plus" outlined :label="t('datatable.button_add')" @click="showAddDialog" />
+                        <DynamicDialog />
+                    </div>
                 </div>
-
-                <div style="display: flex; justify-content: space-between; align-items: center">
-                    <Button type="button" icon="pi pi-filter-slash" label="Clear" outlined style="margin-right: 10px" @click="clearFilters" />
-                    <IconField>
+                <div class="flex flex-col lg:flex-row lg:items-center gap-2 w-full lg:w-auto">
+                    <Button type="button" icon="pi pi-filter-slash" :label="t('datatable.button_clear_filters')" outlined @click="clearFilters" />
+                    <IconField class="w-full lg:w-64">
                         <InputIcon>
                             <i class="pi pi-search" />
                         </InputIcon>
-                        <InputText v-model="globalFilter" placeholder="Global Search" @input="onGlobalFilterChange" />
+                        <InputText v-model="globalFilter" :placeholder="t('datatable.input_global_search')" @input="onGlobalFilterChange" class="w-full" />
                     </IconField>
                 </div>
             </div>
         </template>
-        <Column v-for="(config, index) in props.config" :key="index" :field="config.field" :header="config.header" :sortable="config.sortable" :filter="true" :showFilterMenu="config.filterable" :showFilterMatchModes="false">
+
+        <!-- Generowanie Kolumn -->
+        <Column v-for="(config, index) in selectedColumns" :key="index" :field="config.field" :header="config.header" :sortable="config.sortable" :filter="true" :showFilterMenu="config.filterable" :showFilterMatchModes="false">
             <template v-if="config.body" #body="{ data }">
                 <component :is="config.body(data)" />
             </template>

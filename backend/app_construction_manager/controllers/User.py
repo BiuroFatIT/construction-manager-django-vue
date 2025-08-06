@@ -1,25 +1,41 @@
 import django_filters
-from rest_framework import serializers, viewsets, filters
+from rest_framework import serializers, viewsets, filters, status
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from global_auth.models import CustomUser
 from app_construction_manager.extra.Filters import CustomDateRangeFilter, BooleanInFilter,RelatedNameFilter
+from rest_framework.response import Response
+from django.contrib.auth.models import Group
 
 model = CustomUser
 
 class Serializer(serializers.ModelSerializer):
     groups = serializers.SlugRelatedField(
         many=True,
-        read_only=True,
-        slug_field='name'
+        slug_field='name',
+        queryset=Group.objects.all(),
+        required=False,
     )
 
     class Meta:
         model = model
-        fields = ['first_name', 'last_name', 'email', 'user_company', 'is_active',
-        'last_login','date_joined', 'groups']
+        fields = ['id', 'first_name', 'last_name', 'email', 'user_company', 'is_active',
+        'last_login','date_joined', 'groups', 'username']
+
+    def create(self, validated_data):
+        groups_data = validated_data.pop('groups', None)
+        user = model.objects.create(**validated_data)
+        
+        if groups_data:
+            try:
+                user.groups.set(groups_data)
+            except Exception as e:
+                pass  
+
+        return user
 
 class Filter(django_filters.FilterSet):
+    id = django_filters.CharFilter(field_name='id', lookup_expr='exact')
     first_name = django_filters.CharFilter(field_name='first_name', lookup_expr='icontains')
     last_name = django_filters.CharFilter(field_name='last_name', lookup_expr='icontains')
     email = django_filters.CharFilter(field_name='email', lookup_expr='icontains')
@@ -36,7 +52,6 @@ class Pagination(PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'page_size'
     page_size = 20
-    max_page_size = 100
 
 class ViewSet(viewsets.ModelViewSet):
     queryset = model.objects.all()
@@ -52,6 +67,16 @@ class ViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return CustomUser.objects.filter(user_company=user.user_company)
+    
+    def create(self, request):
+        user = self.request.user
+        data = self.request.data.copy()
+        data['user_company'] = user.user_company.id
+        data['username'] = data['email']
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
     

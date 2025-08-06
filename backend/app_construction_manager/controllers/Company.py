@@ -109,8 +109,6 @@ class Filter(django_filters.FilterSet):
 class Pagination(PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'page_size'
-    page_size = 20
-    max_page_size = 100
 
 class ViewSet(viewsets.ModelViewSet):
     queryset = model.objects.all()

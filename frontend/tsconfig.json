@@ -6,7 +6,7 @@
         "moduleResolution": "Bundler",
         "strict": true,
         "jsx": "preserve",
-        "jsxFactory": "h",             
+        "jsxFactory": "h",
         "jsxFragmentFactory": "Fragment",
         "types": ["vite/client"],
         "esModuleInterop": true,
@@ -18,8 +18,5 @@
             "@/*": ["src/*"]
         }
     },
-    "include": [
-        "src/**/*",
-        "shims-vue.d.ts"
-    ]
+    "include": ["src/**/*", "shims-vue.d.ts"]
 }

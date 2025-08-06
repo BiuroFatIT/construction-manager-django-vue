@@ -9,12 +9,18 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     Button: typeof import('primevue/button')['default']
+    Checkbox: typeof import('primevue/checkbox')['default']
     CustomDataTable: typeof import('./components/DataTable/CustomDataTable.vue')['default']
+    Fieldset: typeof import('primevue/fieldset')['default']
     FloatingConfigurator: typeof import('./components/FloatingConfigurator.vue')['default']
     FooterDynamicDialog: typeof import('./components/DataTable/FooterDynamicDialog.vue')['default']
+    FormField: typeof import('@primevue/forms/formfield')['default']
     Image: typeof import('primevue/image')['default']
+    InputMask: typeof import('primevue/inputmask')['default']
+    InputNumber: typeof import('primevue/inputnumber')['default']
     InputText: typeof import('primevue/inputtext')['default']
     Message: typeof import('primevue/message')['default']
+    MultiSelect: typeof import('primevue/multiselect')['default']
     Password: typeof import('primevue/password')['default']
     ProgressBar: typeof import('primevue/progressbar')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
