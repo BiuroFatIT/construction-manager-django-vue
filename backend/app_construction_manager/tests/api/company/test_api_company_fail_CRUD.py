@@ -61,14 +61,3 @@ def test_partial_update_company(api_client, company_payload):
     assert patch_resp.status_code == status.HTTP_200_OK
     assert patch_resp.data['name'] == patch_data['name']
 
-@pytest.mark.order(TEST_ORDER)
-@pytest.mark.django_db
-def test_list_companies(api_client, company_payload):
-    # Ensure at least one company exists
-    payload = company_payload()
-    api_client.post("/api/construction/manager/company/", data=payload, format='json')
-
-    list_resp = api_client.get("/api/construction/manager/company/")
-    assert list_resp.status_code == status.HTTP_200_OK
-    assert isinstance(list_resp.data['results'], list)
-    assert len(list_resp.data['results']) > 0

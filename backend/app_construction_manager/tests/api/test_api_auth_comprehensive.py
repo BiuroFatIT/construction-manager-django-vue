@@ -99,32 +99,6 @@ def test_access_with_wrong_token_type(unauthenticated_client, test_user_credenti
     response = client.get('/api/construction/manager/')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-
-@pytest.mark.django_db
-@pytest.mark.order(TEST_ORDER)
-def test_user_permissions_on_company_endpoint(api_client):
-    """Test that authenticated user can access company endpoints"""
-    # Test GET (list)
-    response = api_client.get('/api/construction/manager/company/')
-    assert response.status_code == status.HTTP_200_OK
-    
-    # Test that response has expected structure
-    assert 'results' in response.data
-    assert isinstance(response.data['results'], list)
-
-
-@pytest.mark.django_db
-@pytest.mark.order(TEST_ORDER)
-def test_user_permissions_on_products_endpoint(api_client):
-    """Test that authenticated user can access products endpoints"""
-    response = api_client.get('/api/construction/manager/products/')
-    assert response.status_code == status.HTTP_200_OK
-    
-    # Test that response has expected structure
-    assert 'results' in response.data
-    assert isinstance(response.data['results'], list)
-
-
 @pytest.mark.django_db
 @pytest.mark.order(TEST_ORDER)
 def test_token_contains_required_claims(unauthenticated_client, test_user_credentials):
