@@ -15,8 +15,8 @@ const { t } = useI18n();
 
 PrimeVue.config.locale = {
     ...PrimeVue.config.locale,
-    apply: t('datatable.button_clear_filters'),
-    clear: t('datatable.button_apply_filters')
+    apply: t('datatable.button_apply_filters'),
+    clear: t('datatable.button_clear_filters')
 } as any;
 
 const toast = useToast();
