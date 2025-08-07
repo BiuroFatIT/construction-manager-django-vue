@@ -1,7 +1,7 @@
 import pytest
 from rest_framework import status
 
-TEST_ORDER = 10
+TEST_ORDER = 11
 
 @pytest.mark.order(TEST_ORDER)
 def test_client_can_access_products_endpoint(api_client, db):

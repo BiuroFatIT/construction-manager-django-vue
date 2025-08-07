@@ -142,3 +142,43 @@ def company_payload(user, address):
             }
         return payload
     return _payload
+
+
+@pytest.fixture
+def user_with_company(user, address, django_db_blocker):
+    from app_construction_manager.models import Company
+    import uuid
+
+    with django_db_blocker.unblock():
+        company = Company.objects.create(
+            name=f"Test Company {uuid.uuid4()}",
+            email="company@example.com",
+            address=address,
+            create_by=user,
+            phone_number_1="123456789",
+            timezone="UTC",
+            is_active=True  # <<<<<< Add this here
+        )
+        user.user_company = company
+        user.save()
+    return user
+
+@pytest.fixture
+def user_payload():
+    def _payload(as_instance=False):
+        data = {
+            "email": "pytestuser@fatit.com",
+            "password": "TestPassword123!",
+            "first_name": "PyTest",
+            "last_name": "User",
+            "is_active": True,
+            "username": "PytestUser",
+            # Add other required fields for your User model here
+        }
+        if as_instance:
+            # For model creation, exclude password (set it separately)
+            data_instance = data.copy()
+            data_instance.pop("password")
+            return data_instance
+        return data
+    return _payload
