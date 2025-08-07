@@ -94,7 +94,7 @@ onMounted(async () => {
             }
         });
 
-        const data = response.data.results[0];
+        const data = response.data[0];
 
         initialValues.email = data.email || 'asd';
         initialValues.first_name = data.first_name || 'asd';

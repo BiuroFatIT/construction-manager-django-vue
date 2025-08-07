@@ -128,6 +128,15 @@ function onSort(event: DataTableSortEvent) {
 
 // Filters Handler
 const filters = ref<Record<string, FilterItem>>({});
+const debounceMap = new Map<string, () => void>();
+
+function debounce(fn: Function, delay: number) {
+    let timeout: ReturnType<typeof setTimeout>;
+    return (...args: any[]) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => fn(...args), delay);
+    };
+}
 
 function onFilterChange() {
     page.value = 1;
@@ -147,7 +156,7 @@ props.config.forEach((col) => {
 function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
     const filterItem = filters.value[col.field];
 
-    // Synchronizacja filterModel.value <-> filters.value[col.field].value
+    // Synchronizacja filterModel <-> filters
     watch(
         () => filterModel.value,
         (newVal) => {
@@ -156,23 +165,42 @@ function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
             const isCleared = newVal === null || (Array.isArray(newVal) && newVal.length === 0) || (typeof newVal === 'object' && newVal !== null && Object.values(newVal).every((v) => v == null));
 
             if (isCleared) {
-                filterCallback(); // 🔁 triggeruj filtr ręcznie przy „Clear”
+                filterCallback(); // triggeruj natychmiast przy czyszczeniu
             }
         }
     );
 
+    // debounce init
+    if (!debounceMap.has(col.field)) {
+        debounceMap.set(
+            col.field,
+            debounce(() => {
+                onFilterChange(); // ← globalny fetchData()
+            }, 500)
+        );
+    }
+
+    const debouncedFilter = debounceMap.get(col.field)!;
+
+    // --- TEXT FILTER ---
     if (col.filterType === 'text') {
         return h(InputText, {
             modelValue: filterItem.value,
             'onUpdate:modelValue': (val: any) => {
                 filterItem.value = val;
                 filterModel.value = val;
+                debouncedFilter();
             },
             placeholder: t('datatable.input_search'),
-            class: 'p-column-filter'
+            class: 'p-column-filter',
+            onBlur: () => {
+                filterCallback();
+                setTimeout(() => document.body.click(), 50);
+            }
         });
     }
 
+    // --- NUMBER RANGE FILTER ---
     if (col.filterType === 'number') {
         return h(
             'div',
@@ -182,57 +210,115 @@ function getFilterComponent(col: any, filterModel: any, filterCallback: any) {
             },
             [
                 h(InputNumber, {
-                    modelValue: filterModel.value?.[`min`],
+                    modelValue: filterModel.value?.min,
                     'onUpdate:modelValue': (val: any) => {
-                        filterModel.value = { ...filterModel.value, [`min`]: val };
+                        const current = filterModel.value?.min;
+
+                        // Jeśli wartość się nie zmieniła – nie rób nic
+                        if (val === current) return;
+
+                        // Jeśli obie wartości są null/undefined, też nie rób nic
+                        if ((val == null || val === '') && (current == null || current === '')) return;
+
+                        filterModel.value = { ...filterModel.value, min: val };
+                        filterItem.value = { ...filterItem.value, min: val };
+                        debouncedFilter();
                     },
                     placeholder: 'Min',
                     inputStyle: { width: '85px' },
                     class: 'p-column-filter',
                     mode: 'decimal',
                     minFractionDigits: 0,
-                    maxFractionDigits: 2
+                    maxFractionDigits: 2,
+                    onBlur: () => {
+                        filterCallback();
+                        setTimeout(() => document.body.click(), 50);
+                    }
                 }),
                 h(InputNumber, {
-                    modelValue: filterModel.value?.[`max`],
+                    modelValue: filterModel.value?.max,
                     'onUpdate:modelValue': (val: any) => {
-                        filterModel.value = { ...filterModel.value, [`max`]: val };
+                        const currentMax = filterModel.value?.max;
+                        if (val !== currentMax) {
+                            filterModel.value = { ...filterModel.value, max: val };
+                            filterItem.value = { ...filterItem.value, max: val };
+                            debouncedFilter();
+                        }
                     },
                     placeholder: 'Max',
                     inputStyle: { width: '85px' },
                     class: 'p-column-filter',
                     mode: 'decimal',
                     minFractionDigits: 0,
-                    maxFractionDigits: 2
+                    maxFractionDigits: 2,
+                    onBlur: () => {
+                        filterCallback();
+                        setTimeout(() => document.body.click(), 50);
+                    }
                 })
             ]
         );
     }
 
+    // --- SELECT FILTER ---
     if (col.filterType === 'select') {
-        return h(MultiSelect, {
-            modelValue: filterModel.value,
-            'onUpdate:modelValue': (val: any) => {
-                filterModel.value = val;
+        function pluralizeColumn(count: number) {
+            if (count === 1) return t('datatable.pluralizeColumnOne');
+            if (count > 1 && count < 5) return t('datatable.pluralizeColumnFew');
+            return t('datatable.pluralizeColumnMany');
+        }
+
+        return h(
+            MultiSelect,
+            {
+                modelValue: filterModel.value,
+                'onUpdate:modelValue': (val: any) => {
+                    filterModel.value = val;
+                    filterItem.value = val;
+                    debouncedFilter();
+                },
+                options: col.filterSelectArray,
+                optionLabel: 'label',
+                optionValue: 'value',
+                placeholder: t('datatable.input_multi_select'),
+                selectAllLabel: 'test',
+                display: 'chip',
+                class: 'p-column-filter',
+                filter: true,
+                onHide: () => {
+                    filterCallback();
+                    setTimeout(() => document.body.click(), 50);
+                }
             },
-            options: col.filterSelectArray,
-            optionLabel: 'label',
-            optionValue: 'value',
-            placeholder: t('datatable.input_multi_select'),
-            class: 'p-column-filter'
-        });
+            {
+                value: () => {
+                    const count = filterModel.value?.length || 0;
+                    const text = count > 0 ? `Wybrano ${count} ${pluralizeColumn(count)}` : t('datatable.input_multi_select');
+                    return h('span', text);
+                }
+            }
+        );
     }
 
+    // --- DATE/DATETIME FILTER ---
     if (col.filterType === 'date' || col.filterType === 'datetime') {
         return h(DatePicker, {
+            modelValue: filterItem.value?.map((val: string) => (val ? new Date(val) : null)) || null,
             'onUpdate:modelValue': (val: any) => {
+                let formatted;
+
                 if (Array.isArray(val)) {
-                    // Zakres dat
-                    filterModel.value = val.map((date) => (date ? formatDate(date) : null));
+                    formatted = val.map((date) => (date ? formatDate(date) : null));
                 } else {
-                    // Pojedyncza data
-                    filterModel.value = val ? formatDate(val) : null;
+                    formatted = val ? formatDate(val) : null;
                 }
+
+                // Zapisz w modelu jako stringi (dla backendu)
+                filterModel.value = formatted;
+                // Ale zapamiętaj Date[] do ponownego otwarcia
+                filterItem.value = val;
+
+                debouncedFilter();
             },
             placeholder: col.filterType === 'datetime' ? t('datatable.input_date_time') : t('datatable.input_date'),
             class: 'p-column-filter',
@@ -329,8 +415,9 @@ const showAddDialog = () => {
 
 // Obsługa dynamicznych kolumn
 const values = ref([...props.config]);
-const selectedColumns = ref([...props.config]);
-const columns = ref([...props.config]);
+const idColumn = props.config.find((col) => col.field === 'id')!;
+const columns = ref(props.config.filter((col) => col.field !== 'id'));
+const selectedColumns = ref([...columns.value]);
 
 const onToggle = (val: Config[]) => {
     selectedColumns.value = columns.value.filter((col) => val.some((v) => v.field === col.field));
@@ -377,7 +464,6 @@ const handleExport = async () => {
         filterDisplay="menu"
         :filters="filters"
         :loading="loading"
-        @filter="onFilterChange"
         scrollable
         scrollHeight="75vh"
     >
@@ -386,7 +472,7 @@ const handleExport = async () => {
             <div class="flex flex-col gap-4 lg:flex-row lg:justify-between lg:items-center">
                 <div class="flex flex-col lg:flex-row lg:items-center gap-3 w-full lg:w-auto">
                     <div class="w-full lg:w-80">
-                        <MultiSelect v-model="selectedColumns" :options="values" optionLabel="header" filter placeholder="Wybierz Kolumny" :maxSelectedLabels="3" :selectedItemsLabel="t('datatable.input_column_range')" class="w-full" />
+                        <MultiSelect v-model="selectedColumns" :options="columns" optionLabel="header" filter placeholder="Wybierz Kolumny" :maxSelectedLabels="3" :selectedItemsLabel="t('datatable.input_column_range')" class="w-full" />
                     </div>
                     <div class="flex flex-row gap-2">
                         <Button icon="pi pi-external-link" outlined :label="t('datatable.button_export')" @click="handleExport" :loading="exportLoading" />
@@ -406,8 +492,29 @@ const handleExport = async () => {
             </div>
         </template>
 
+        <!-- Stała kolumna ID -->
+        <Column :field="idColumn.field" :header="idColumn.header" :sortable="idColumn.sortable" :filter="true" :showFilterMenu="idColumn.filterable" :showFilterMatchModes="false" :showApplyButton="false" :showClearButton="false">
+            <template v-if="idColumn.body" #body="{ data }">
+                <component :is="idColumn.body(data)" />
+            </template>
+            <template #filter="{ filterModel, filterCallback }">
+                <component :is="getFilterComponent(idColumn, filterModel, filterCallback)" />
+            </template>
+        </Column>
+
         <!-- Generowanie Kolumn -->
-        <Column v-for="(config, index) in selectedColumns" :key="index" :field="config.field" :header="config.header" :sortable="config.sortable" :filter="true" :showFilterMenu="config.filterable" :showFilterMatchModes="false">
+        <Column
+            v-for="(config, index) in selectedColumns"
+            :key="index"
+            :field="config.field"
+            :header="config.header"
+            :sortable="config.sortable"
+            :filter="true"
+            :showFilterMenu="config.filterable"
+            :showFilterMatchModes="false"
+            :showApplyButton="false"
+            :showClearButton="false"
+        >
             <template v-if="config.body" #body="{ data }">
                 <component :is="config.body(data)" />
             </template>
@@ -415,5 +522,9 @@ const handleExport = async () => {
                 <component :is="getFilterComponent(config, filterModel, filterCallback)" />
             </template>
         </Column>
+
+        <template #empty>
+            <div class="text-center mt-3">{{ t('datatable.lack_of_data') }}</div>
+        </template>
     </DataTable>
 </template>
