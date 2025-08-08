@@ -6,6 +6,7 @@ from global_auth.models import CustomUser
 from app_construction_manager.extra.Filters import CustomDateRangeFilter, BooleanInFilter,RelatedNameFilter
 from rest_framework.response import Response
 from django.contrib.auth.models import Group
+from django.db.models import Min
 
 model = CustomUser
 
@@ -51,7 +52,6 @@ class Filter(django_filters.FilterSet):
 class Pagination(PageNumberPagination):
     page_query_param = 'page'
     page_size_query_param = 'page_size'
-    page_size = 20
 
 class ViewSet(viewsets.ModelViewSet):
     queryset = model.objects.all()
@@ -60,13 +60,32 @@ class ViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
     filterset_class = Filter
     ordering_fields = '__all__'
-    ordering = ['-email']
     search_fields = ['first_name', 'last_name', 'email', 'user_company__name', 'is_active',
         'last_login','date_joined', 'groups__name']
 
     def get_queryset(self):
         user = self.request.user
-        return CustomUser.objects.filter(user_company=user.user_company)
+        qs = CustomUser.objects.filter(user_company=user.user_company)
+
+        # Dodajemy adnotację z minimalną nazwą grupy
+        qs = qs.annotate(
+            first_group_name=Min('groups__name')
+        )
+
+        # Pobierz parametry sortowania z zapytania
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            # jeśli zamówienie dotyczy groups lub -groups, zamień na first_group_name
+            if ordering == 'groups':
+                ordering = 'first_group_name'
+            elif ordering == '-groups':
+                ordering = '-first_group_name'
+            qs = qs.order_by(ordering)
+        else:
+            # domyślne sortowanie (np. email)
+            qs = qs.order_by('-email')
+
+        return qs
     
     def create(self, request):
         user = self.request.user

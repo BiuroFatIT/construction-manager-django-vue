@@ -89,6 +89,12 @@
         "input_multi_select": "Wybierz opcje",
         "input_column_range": "Wybierz kolumny",
 
-        "message_success_add": "Rekord został pomyślnie dodany"
+        "message_success_add": "Rekord został pomyślnie dodany",
+
+        "pluralizeColumnOne": "Opcję",
+        "pluralizeColumnFew": "Opcje",
+        "pluralizeColumnMany": "Opcji",
+
+        "lack_of_data": "Brak danych do wyświetlenia"
     }
 }
