@@ -101,7 +101,7 @@ def test_user_from_different_company_cannot_access_users(api_client, user_payloa
     response = api_client.get("/api/construction/manager/user/")
     assert response.status_code == 200
     
-    user_emails = [u["email"] for u in response.data["results"]]
+    user_emails = [u["email"] for u in response.data]
     assert user1.email in user_emails
     assert user2.email not in user_emails  # Should not see user from different company
     

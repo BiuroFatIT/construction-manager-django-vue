@@ -68,10 +68,9 @@ def test_list_users(api_client, user_payload, user_with_company):
     User.objects.create_user(password="TestPassword123!", user_company=user_with_company.user_company, **user_payload(as_instance=True))
     response = api_client.get("/api/construction/manager/user/")
     assert response.status_code == 200
-    # API returns paginated response, not direct list
-    assert "results" in response.data
-    assert isinstance(response.data["results"], list)
-    assert any(u["email"] == user_payload()["email"] for u in response.data["results"])
+    # API returns direct list, not paginated response
+    assert isinstance(response.data, list)
+    assert any(u["email"] == user_payload()["email"] for u in response.data)
 
 @pytest.mark.order(TEST_ORDER)
 @pytest.mark.django_db
